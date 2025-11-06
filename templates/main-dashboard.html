@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notifications</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <img src="static/imgs/CC.png">
+                        </span>
+                        <span class="title1">Chick Care</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/main_dashboard">
+                        <span class="icon">
+                            <ion-icon name="reorder-four-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/webcam">
+                        <span class="icon">
+                            <ion-icon name="stats-chart-outline"></ion-icon>
+                        </span>
+                        <span class="title">Growth Tracking</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/feeding">
+                        <span class="icon">
+                            <ion-icon name="layers-outline"></ion-icon>
+                        </span>
+                        <span class="title">Supplies Stock</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/environment">
+                        <span class="icon">
+                            <ion-icon name="cloudy-outline"></ion-icon>
+                        </span>
+                        <span class="title">Environment</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/dashboard">
+                        <span class="icon">
+                            <ion-icon name="notifications-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/sanitization">
+                        <span class="icon">
+                            <ion-icon name="water-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sanitization</span>
+                    </a>
+                </li>
+
+                {% if session['user_role'] == 'admin' %}
+                <li>
+                    <a href="/manage_users">
+                        <span class="icon">
+                            <ion-icon name="people-outline"></ion-icon>
+                        </span>
+                        <span class="title">Manage Users</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li>
+                    <a href="/report">
+                        <span class="icon">
+                            <ion-icon name="file-tray-stacked-outline"></ion-icon>
+                        </span>
+                        <span class="title">Report</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sign Out</span>
+                    </a>
+                </li>
+                </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+
+                <div class="datetime">
+                    <span id="displayDateTime"></span>
+                </div>
+
+                <div class="iconn" onclick="toggleNotifi()">
+                    <img src="static/imgs/bell.png" alt=""> <span id="notificationCount">0</span>
+                </div>
+                <div class="notifi-box" id="box">
+                    <h2>Notifications <span id="notificationCount1">0</span></h2>
+                <div class="notifi-item">
+
+                    <div class="text" id="notificationItems">
+
+                    </div>
+                </div>
+
+
+                </div>
+
+
+
+                <div class="user">
+                    <img src="static/imgs/admin.jpg" alt="">
+                </div>
+            </div>
+
+
+    <div class="dashboard-container">
+    <header>
+        <h1>Chick Care Overview</h1>
+    </header>
+
+    <div class="summary-grid">
+        <div class="card">
+            <div class="card-header">
+                <ion-icon name="stats-chart-outline"></ion-icon>
+                <h2>Growth Tracking</h2>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><strong>Weight:</strong><div id="weight"></div></li>
+                    <li><strong>Weight:</strong><div id="weight2"></div></li>
+                    <li><strong>Weight:</strong><div id="weight3"></div></li>
+                    <li><strong>Weight:</strong><div id="weight4"></div></li>
+                    <li><strong>Weight:</strong><div id="weight5"></div></li>
+                    <li><strong>Weight:</strong><div id="weight6"></div></li>
+                </ul>
+            </div>
+            <button class="view-btn" onclick="location.href='/webcam'">View Growth Tab</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <ion-icon name="layers-outline"></ion-icon>
+                <h2>Supplies Stock</h2>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><strong>Food:</strong><div id="foodLevel"></div></li>
+                    <li><strong>Water:</strong><div id="waterLevel"></div></li>
+                </ul>
+                <br>
+            </div>
+            <button class="view-btn" onclick="location.href='/feeding'">View Supplies</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <ion-icon name="cloudy-outline"></ion-icon>
+                <h2>Environment</h2>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li ><strong>Temp:</strong><div id="temperature-value"></div></li>
+                    <li><strong>Hum:</strong><div id="humidity-value"></div></li>
+                    <li><strong>Light1:</strong><div id="light-status-1"></div></li>
+                    <li><strong>ExFan:</strong><div id="exhaust-fan-status"></div></li>
+                </ul>
+            </div>
+            <button class="view-btn" onclick="location.href='/environment'">View Environment</button>
+        </div>
+    </div>
+
+    <div class="secondary-grid">
+        <div class="card notifications">
+        <div class="card-header">
+            <ion-icon name="notifications-circle-outline"></ion-icon>
+            <h2>Notifications (<span id="notification-count">0</span>)</h2>
+        </div>
+        <div class="card-content">
+            <ul id="notification-list">
+                </ul>
+        </div>
+        <button class="view-btn" onclick="location.href='/dashboard'">View All Notifications</button>
+        </div>
+
+        <div class="card sanitization">
+            <div class="card-header">
+                <ion-icon name="water-outline"></ion-icon>
+                <h2>Sanitization</h2>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><strong>Conveyor:</strong><div class="num" id="status_cvyr"></div></li>
+                    <li><strong>Sprinkle:</strong><div class="num" id="sprkl"></div></li>
+                    <li><strong>UV Light:</strong><div class="num" id="uvc_status"></div></li>
+                </ul>
+            </div>
+            <button class="view-btn" onclick="location.href='/sanitization'">View Sanitization</button>
+        </div>
+    </div>
+    </div>
+
+</div>
+    </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sanitization</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <img src="static/imgs/CC.png">
+                        </span>
+                        <span class="title1">Chick Care</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/main_dashboard">
+                        <span class="icon">
+                            <ion-icon name="reorder-four-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/webcam">
+                        <span class="icon">
+                            <ion-icon name="stats-chart-outline"></ion-icon>
+                        </span>
+                        <span class="title">Growth Tracking</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/feeding">
+                        <span class="icon">
+                            <ion-icon name="layers-outline"></ion-icon>
+                        </span>
+                        <span class="title">Supplies Stock</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/environment">
+                        <span class="icon">
+                            <ion-icon name="cloudy-outline"></ion-icon>
+                        </span>
+                        <span class="title">Environment</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/dashboard">
+                        <span class="icon">
+                            <ion-icon name="notifications-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/sanitization">
+                        <span class="icon">
+                            <ion-icon name="water-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sanitization</span>
+                    </a>
+                </li>
+
+                {% if session['user_role'] == 'admin' %}
+                <li>
+                    <a href="/manage_users">
+                        <span class="icon">
+                            <ion-icon name="people-outline"></ion-icon>
+                        </span>
+                        <span class="title">Manage Users</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li>
+                    <a href="/report">
+                        <span class="icon">
+                            <ion-icon name="file-tray-stacked-outline"></ion-icon>
+                        </span>
+                        <span class="title">Report</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sign Out</span>
+                    </a>
+                </li>
+                </ul>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+
+                <div class="datetime">
+                    <span id="displayDateTime"></span>
+                </div>
+
+
+                <div class="iconn" onclick="toggleNotifi()">
+                    <img src="static/imgs/bell.png" alt=""> <span id="notificationCount">0</span>
+                </div>
+                <div class="notifi-box" id="box">
+                    <h2>Notifications <span id="notificationCount1">0</span></h2>
+                <div class="notifi-item">
+
+                    <div class="text" id="notificationItems">
+
+                    </div>
+                </div>
+
+
+                </div>
+
+
+                <div class="user">
+                    <img src="static/imgs/admin.jpg" alt="">
+                </div>
+            </div>
+
+        <div class="status1">
+                    <h1>Sanitization</h1>
+                <div class="cBox">
+
+                <div class="cd">
+
+                    <div>
+                        <div class="num" id="status_cvyr"></div>
+                        <div class="cName">Conveyor</div>
+                    </div>
+
+                    <div class="icBx">
+                        <img class="convy" src="/static/imgs/conveyor.png">
+                    </div>
+
+                    <button id="stopConveyor" class="stop-btn">STOP</button>
+
+                </div>
+
+                <div class="cd">
+                    <div>
+                        <div class="num" id="sprkl"></div>
+                        <div class="cName">Sprinkle</div>
+                    </div>
+
+                    <div class="icBx">
+                        <img class="sprink" src="/static/imgs/sprinkle.png">
+                    </div>
+
+                    <button id="stopSprinkle" class="stop-btn">STOP</button>
+
+                </div>
+            </div>
+
+                <div class="cBox1">
+
+                <div class="cd">
+                    <div>
+                        <div class="num" id="uvc_status"></div>
+                        <div class="cName">UVC Light</div>
+                    </div>
+
+                    <div class="icBx">
+                        <img class="uvcl" id="uvcImage" src="/static/imgs/UVCoff.png">
+                    </div>
+
+                    <button id="stopUVLight" class="stop-btn">STOP</button>
+
+                </div>
+
+                    <script>
+                        // 1. Select the elements we need to work with
+                        // Corrected ID to "uvc_status"
+                        const statusElement = document.getElementById('uvc_status');
+                        const imageElement = document.getElementById('uvcImage');
+                    
+                        // 2. Define the function that updates the image
+                        function updateUvcImage() {
+                            // Get the text and trim whitespace
+                            const status = statusElement.innerText.trim(); 
+                            
+                            if (status === 'ON') {
+                                // Corrected path to use url_for
+                                imageElement.src = '{{ url_for("static", filename="imgs/UVCon.png") }}';
+                            } else {
+                                // Default to OFF for 'OFF', empty, or any other state
+                                // Corrected path to use url_for
+                                imageElement.src = '{{ url_for("static", filename="imgs/UVCoff.png") }}';
+                            }
+                        }
+                    
+                        // 3. Create an observer to watch for changes
+                        const observer = new MutationObserver(function(mutations) {
+                            updateUvcImage();
+                        });
+                    
+                        // 4. Tell the observer to watch the status element for text changes
+                        observer.observe(statusElement, {
+                            childList: true, // This watches for changes to the text inside
+                        });
+                    
+                        // 5. Run the function once on page load just in case
+                        updateUvcImage();
+                    </script>
+                    </div>
+
+            </div>
+
+            <div id="table-body" class="SanitizationTable">
+                    <table border="1">
+                <thead>
+                    <tr>
+                        <th>DateTime</th>
+                        <th>Conveyor</th>
+                        <th>Sprinkle</th>
+                        <th>UVLight</th>
+                    </tr>
+                </thead>
+                <tbody >
+                </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+
+    <script type(e"module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</body>
+</html>

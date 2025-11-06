@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile | ChickCare</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="main">
+
+      <!-- Navbar / Topbar -->
+      {% include 'navbar.html' %}
+
+      <!-- Profile Content -->
+      <div class="content">
+        <h1>Profile</h1>
+        <div class="profile-card">
+          <img src="{{ url_for('static', filename='images/avatar.png') }}" alt="User Avatar" class="avatar">
+          <h2>{{ session.get('user_name', 'User') }}</h2>
+          <p><strong>Email:</strong> {{ session.get('user_email', 'example@email.com') }}</p>
+          <p><strong>Role:</strong> {{ session.get('user_role', 'user') }}</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

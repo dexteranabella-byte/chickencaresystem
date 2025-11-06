@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: chickcare-app
+    env: python
+    branch: main
+    region: oregon
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      # Import SQL if present
+      if [ -f test_utf8_pg_clean.sql ]; then
+        echo "Initializing database..."
+        psql $DATABASE_URL -f test_utf8_pg_clean.sql
+      fi
+    startCommand: python ChickCare.py
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chickcare-db
+          property: connectionString
+
+databases:
+  - name: chickcare-db
+    databaseName: chickcare
+    user: chickcare_user
+    plan: free

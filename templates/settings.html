@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | ChickCare</title>
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <!-- Main Content -->
+    <div class="main">
+      {% include 'navbar.html' %}
+
+      <div class="content">
+        <h1>Settings</h1>
+
+        <!-- Settings Form -->
+        <form class="settings-form" method="POST" action="{{ url_for('settings') }}">
+          
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" value="{{ session.get('user_name', '') }}" required>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ session.get('user_email', '') }}" required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">New Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter new password">
+          </div>
+
+          <button type="submit" class="btn">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
