@@ -11,20 +11,19 @@
             margin-top: 20px; /* Add some space below the topbar */
         }
 
-        /* --- NEW: Style for the Growth Tracking text in the topbar --- */
-        .topbar .page-title {
-            font-size: 1.5em; /* Adjust font size to match other topbar elements */
+        /* --- NEW: Style for the H1 title above the feed --- */
+        .growthCamera h1 {
+            text-align: center;
+            font-size: 2.5em; /* Or match your old h1 style */
             font-weight: 700;
-            color: var(--black2); /* Use a variable from your style.css or a suitable dark color */
-            margin-left: 20px; /* Space from the toggle icon */
-            display: flex; /* Allow it to sit next to other items */
-            align-items: center; /* Vertically align with other topbar elements */
+            color: black; /* As requested */
+            margin-bottom: 20px; /* Space between title and video */
         }
         /* --- END NEW --- */
 
-
         /* This class name is kept for consistency with your design */
         .gif-wrapper {
+            position: relative; /* Set to relative to allow absolute positioning inside */
             width: 100%;
             max-width: 900px; /* Adjust as needed */
             margin: 0 auto;
@@ -42,6 +41,9 @@
             /* This makes the video non-clickable and non-interactive */
             pointer-events: none;
         }
+
+        /* --- REMOVED: .feed-overlay-text style is gone --- */
+
 
         /* You might need to adjust .main.active .topbar's positioning if the new title pushes it */
         .main.active .topbar {
@@ -164,8 +166,7 @@
                     <ion-icon name="menu-outline"></ion-icon>
                 </div>
 
-                <!-- --- NEW: Page Title in Topbar --- --><h2 class="page-title">Growth Tracking</h2>
-                <!-- --- END NEW --- --><div class="datetime">
+                <!-- --- Page Title REMOVED from topbar --- --><div class="datetime">
                     <span id="displayDateTime"></span>
                 </div>
 
@@ -191,10 +192,16 @@
             </div>
 
         <!-- ========================= Growth Monitoring ==================== --><div class="growthCamera">
-                <!-- Removed H1 from here, it's now in the topbar --><div class="gif-wrapper">
+                
+                <!-- NEW: Title is here, above the feed -->
+                <h1>Growth Tracking</h1>
+
+                <div class="gif-wrapper">
                     <video src="{{ url_for('static', filename='imgs/Camera is loading.mp4') }}" autoplay loop muted playsinline>
                         Your browser does not support the video tag.
                     </video>
+                    
+                    <!-- REMOVED: Overlay Text is gone -->
                 </div>
 
             </div>
@@ -303,7 +310,8 @@
         }
 
         function fetchImageList() {
-            fetch("{{ url_for('get_image_list') }}") // replace 'get_image_list' with your route
+            // FIX: Swapped quotes. Use single quotes for JS string, double for Jinja.
+            fetch('{{ url_for("get_image_list") }}') // replace 'get_image_list' with your route
                 .then(response => response.json())
                 .then(data => {
                     if (JSON.stringify(data) !== JSON.stringify(imageFiles)) {
@@ -340,9 +348,11 @@
                 currentImageIndex = 0;
             }
 
-            document.getElementById('current-image-1').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[currentImageIndex];
-            document.getElementById('current-image-2').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[(currentImageIndex + 1) % imageFiles.length];
-            document.getElementById('current-image-3').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[(currentImageIndex + 2) % imageFiles.length];
+            // FIX: Swapped quotes. Use single quotes for JS string, double for Jinja.
+            const staticShotsUrl = '{{ url_for("static", filename="shots/") }}';
+            document.getElementById('current-image-1').src = staticShotsUrl + imageFiles[currentImageIndex];
+            document.getElementById('current-image-2').src = staticShotsUrl + imageFiles[(currentImageIndex + 1) % imageFiles.length];
+            document.getElementById('current-image-3').src = staticShotsUrl + imageFiles[(currentImageIndex + 2) % imageFiles.length];
             document.getElementById('no-images-msg').style.display = "none";
         }
 
