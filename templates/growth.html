@@ -2,340 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Growth Tracking</title>
-    <!-- Imports Google Font 'Inter' -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <!-- Links to your existing stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* Base Styles */
-        :root {
-            --blue: #2a2185;
-            --white: #fff;
-            --gray: #f5f5f5;
-            --black1: #222;
-            --black2: #999;
-            --sidebar-width: 260px;
-            --sidebar-width-collapsed: 80px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            overflow-x: hidden;
-            background-color: var(--gray);
-        }
-
-        /* Main layout container */
-        .container {
-            position: relative;
-            width: 100%;
-            display: flex;
-        }
-
-        /* Navigation Sidebar */
-        .navigation {
-            position: fixed;
-            width: var(--sidebar-width);
-            height: 100%;
-            background: var(--blue);
-            border-left: 10px solid var(--blue);
-            transition: width 0.5s;
-            overflow-y: auto;
-            z-index: 100;
-        }
-
-        .navigation.active {
-            width: var(--sidebar-width-collapsed);
-        }
-
-        .navigation ul {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding-left: 5px;
-            padding-top: 40px;
-        }
-
-        .navigation ul li {
-            position: relative;
-            list-style: none;
-            width: 100%;
-            border-top-left-radius: 20px;
-            border-bottom-left-radius: 20px;
-            margin-bottom: 5px;
-        }
-        
-        /* Highlight for active page */
-        .navigation ul li.active {
-            background: var(--gray);
-        }
-
-        .navigation ul li a {
-            position: relative;
-            display: flex;
-            width: 100%;
-            text-decoration: none;
-            color: var(--white);
-            align-items: center;
-        }
-        
-        .navigation ul li.active a {
-            color: var(--black1);
-        }
-
-        .navigation ul li a .icon {
-            position: relative;
-            display: block;
-            min-width: 60px;
-            height: 60px;
-            line-height: 70px;
-            text-align: center;
-        }
-
-        .navigation ul li a .icon ion-icon {
-            font-size: 1.75em;
-        }
-        
-        .navigation ul li a .icon img {
-            width: 40px;
-            height: 40px;
-            margin-top: 10px;
-            object-fit: contain;
-        }
-
-        .navigation ul li a .title {
-            position: relative;
-            display: block;
-            padding-left: 10px;
-            height: 60px;
-            line-height: 60px;
-            white-space: nowrap;
-            opacity: 1;
-            transition: opacity 0.3s;
-        }
-        
-        .navigation .title1 {
-            font-weight: 700;
-            font-size: 1.8em;
-            padding-left: 10px;
-            height: 60px;
-            line-height: 60px;
-            white-space: nowrap;
-            opacity: 1;
-            color: var(--white);
-        }
-
-        /* Hide title when sidebar is collapsed */
-        .navigation.active ul li a .title,
-        .navigation.active .title1 {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .navigation ul li:hover,
-        .navigation ul li.active {
-            background-color: var(--gray);
-        }
-
-        .navigation ul li:hover a,
-        .navigation ul li.active a {
-            color: var(--black1);
-        }
-
-        /* Main Content Area */
-        .main {
-            position: absolute;
-            width: calc(100% - var(--sidebar-width));
-            left: var(--sidebar-width);
-            min-height: 100vh;
-            background: var(--gray);
-            transition: width 0.5s, left 0.5s;
-        }
-
-        .main.active {
-            width: calc(100% - var(--sidebar-width-collapsed));
-            left: var(--sidebar-width-collapsed);
-        }
-
-        /* Top Bar */
-        .topbar {
-            width: 100%;
-            height: 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            background: var(--white);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .toggle {
-            position: relative;
-            font-size: 2.5em;
-            cursor: pointer;
-            color: var(--black1);
-        }
-
-        .datetime {
-            font-size: 1em;
-            font-weight: 500;
-            color: var(--black1);
-        }
-
-        .topbar-right-icons {
-            display: flex;
-            align-items: center;
-        }
-
-        .iconn {
-            position: relative;
-            cursor: pointer;
-            margin-right: 20px;
-        }
-
-        .iconn img {
-            width: 24px;
-            height: 24px;
-        }
-
-        .iconn span {
-            position: absolute;
-            top: -5px;
-            right: -10px;
-            background: red;
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.75em;
-            font-weight: 600;
-        }
-
-        .notifi-box {
-            position: absolute;
-            top: 65px;
-            right: 20px;
-            width: 300px;
-            background: var(--white);
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            padding: 15px;
-            display: none; /* Hidden by default */
-            z-index: 200;
-        }
-        
-        .notifi-box.active {
-            display: block; /* Shown when active */
-        }
-
-        .notifi-box h2 {
-            font-size: 1.2em;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        
-        .notifi-box h2 span {
-            font-size: 0.8em;
-            background: red;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 50%;
-            margin-left: 5px;
-        }
-
-        .notifi-item .text h4 {
-            font-size: 0.9em;
-            font-weight: 500;
-            color: var(--black1);
-        }
-        
-        .notifi-item .text p {
-            font-size: 0.8em;
-            color: var(--black2);
-        }
-
-        .user {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .user img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Growth Tracking Content */
-        .growth-tracking-container {
+        /* This minimal style is to make the GIF act like a "live feed" */
+        .live-feed-container {
             padding: 20px;
-            width: 100%;
         }
 
-        .growth-tracking-container h1 {
-            font-size: 2em;
+        .live-feed-container h1 {
+            font-size: 2em; /* Or whatever your h1 style is in style.css */
             font-weight: 700;
-            color: var(--black1);
+            color: #222;
             margin-bottom: 20px;
         }
 
-        /* This is the container for your GIF */
-        .gif-container {
+        .gif-wrapper {
             width: 100%;
-            max-width: 900px; /* Adjust max width as needed */
-            margin: 0 auto; /* Center the container */
-            background: #000;
-            border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* Ensures rounded corners are applied */
+            max-width: 900px; /* Adjust as needed */
+            margin: 0 auto;
+            background: #000; /* Black background to mimic a video player */
+            border-radius: 12px; /* Matches modern aesthetics */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        .gif-container img {
+        .gif-wrapper img {
             width: 100%;
             height: auto;
             display: block;
             /* This makes the image non-clickable and non-interactive */
             pointer-events: none;
-            /* Fallback color if image is loading slowly */
-            background-color: #111;
         }
-
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Navigation Sidebar -->
+        <!-- Your original navigation -->
         <div class="navigation">
             <ul>
                 <li>
                     <a href="#">
                         <span class="icon">
-                            <!-- Using a placeholder as static/imgs/CC.png is a local path -->
-                            <img src="https://placehold.co/40x40/FFFFFF/2a2185?text=CC" alt="Logo">
+                            <!-- This path is from your first file -->
+                            <img src="/static/imgs/CC.png">
                         </span>
                         <span class="title1">Chick Care</span>
                     </a>
                 </li>
 
                 <li>
-                    <!-- Changed href to a static link -->
                     <a href="/main_dashboard">
                         <span class="icon">
                             <ion-icon name="reorder-four-outline"></ion-icon>
@@ -344,7 +62,7 @@
                     </a>
                 </li>
 
-                <!-- This is the active page -->
+                <!-- Added 'active' class to highlight this page -->
                 <li class="active">
                     <a href="/webcam">
                         <span class="icon">
@@ -389,8 +107,9 @@
                         <span class="title">Sanitization</span>
                     </a>
                 </li>
-                
-                <!-- Removed Jinja if-statement, showing link by default -->
+
+                <!-- Jinja block for admin-only link -->
+                {% if session['user_role'] == 'admin' %}
                 <li>
                     <a href="/manage_users">
                         <span class="icon">
@@ -399,6 +118,7 @@
                         <span class="title">Manage Users</span>
                     </a>
                 </li>
+                {% endif %}
 
                 <li>
                     <a href="/report">
@@ -410,8 +130,7 @@
                 </li>
 
                 <li>
-                    <!-- Replaced url_for with static /logout link -->
-                    <a href="/logout">
+                    <a href="{{ url_for('logout') }}">
                         <span class="icon">
                             <ion-icon name="log-out-outline"></ion-icon>
                         </span>
@@ -421,9 +140,8 @@
             </ul>
         </div>
 
-        <!-- Main Content -->
+        <!-- Your original main content area -->
         <div class="main">
-            <!-- Top Bar -->
             <div class="topbar">
                 <div class="toggle">
                     <ion-icon name="menu-outline"></ion-icon>
@@ -433,47 +151,38 @@
                     <span id="displayDateTime"></span>
                 </div>
 
-                <!-- Right side icons -->
-                <div class="topbar-right-icons">
-                    <div class="iconn">
-                        <!-- Placeholder for notification icon -->
-                        <img src="https://placehold.co/24x24/000000/FFFFFF?text=B" alt="Bell">
-                        <span id="notificationCount">0</span>
-                    </div>
 
-                    <div class="user">
-                        <!-- Placeholder for user admin image -->
-                        <img src="https://placehold.co/40x40/CCCCCC/000000?text=A" alt="User">
+                <div class="iconn" onclick="toggleNotifi()">
+                    <!-- This path is from your first file -->
+                    <img src="/static/imgs/bell.png" alt=""> <span id="notificationCount">0</span>
+                </div>
+                <div class="notifi-box" id="box">
+                    <h2>Notifications <span id="notificationCount1">0</span></h2>
+                    <div class="notifi-item">
+                        <div class="text" id="notificationItems">
+                            <!-- Notification content goes here -->
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Notification Box (Hidden by default) -->
-            <div class="notifi-box" id="box">
-                <h2>Notifications <span id="notificationCount1">0</span></h2>
-                <div class="notifi-item">
-                    <div class="text" id="notificationItems">
-                        <p>No new notifications</p>
-                    </div>
+
+                <div class="user">
+                    <!-- This path is from your first file -->
+                    <img src="/static/imgs/admin.jpg" alt="">
                 </div>
             </div>
 
             <!-- ===== MAIN CONTENT FOR GROWTH TRACKING ===== -->
-            <div class="growth-tracking-container">
+            <!-- This replaces the ".schedule" div from your feeding page -->
+            <div class="live-feed-container">
                 <h1>Growth Tracking</h1>
                 
-                <!-- This is the container that holds your GIF -->
-                <div class="gif-container">
+                <div class="gif-wrapper">
                     <!-- 
                       This is the fix:
-                      1. Uses a standard `<img>` tag.
-                      2. `src` attribute points directly to your GIF's path.
-                      3. `onerror` provides a fallback placeholder in case the path is wrong
-                         or the file is missing, so you don't just see a broken icon.
+                      - Uses the static path you provided.
+                      - The wrapper styles it like a video feed.
                     -->
-                    <img src="static/imgs/Camera is loading.gif" 
-                         alt="Camera feed loading..." 
-                         onerror="this.onerror=null;this.src='https://placehold.co/900x675/000000/FFFFFF?text=Error%3A+Could+not+load+GIF';">
+                    <img src="/static/imgs/Camera is loading.gif" alt="Camera feed loading...">
                 </div>
             </div>
             <!-- ===== END OF MAIN CONTENT ===== -->
@@ -481,48 +190,16 @@
         </div>
     </div>
 
-    <!-- Ionicons Scripts -->
+
+    <!-- Your original scripts -->
+    <!-- Make sure main.js is loaded correctly and handles the sidebar toggle -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 
+    <!-- Added script for datetime and notification (from my previous version, as it's needed) -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            
-            // --- Sidebar Toggle ---
-            let toggle = document.querySelector('.toggle');
-            let navigation = document.querySelector('.navigation');
-            let main = document.querySelector('.main');
-            let notifBox = document.querySelector('.notifi-box');
-
-            toggle.onclick = function() {
-                navigation.classList.toggle('active');
-                main.classList.toggle('active');
-                
-                // Close notification box if open
-                if (notifBox.classList.contains('active')) {
-                    notifBox.classList.remove('active');
-                }
-            }
-
-            // --- Notification Toggle ---
-            let notifIcon = document.querySelector('.iconn');
-            if (notifIcon) {
-                notifIcon.onclick = function(e) {
-                    e.stopPropagation(); // Prevents click from closing it immediately
-                    notifBox.classList.toggle('active');
-                }
-            }
-            
-            // --- Close Notification Box when clicking outside ---
-            document.addEventListener('click', function(e) {
-                if (notifBox && notifIcon) {
-                    // If click is outside the box AND not on the icon
-                    if (!notifBox.contains(e.target) && !notifIcon.contains(e.target)) {
-                        notifBox.classList.remove('active');
-                    }
-                }
-            });
-
             // --- Real-time Date and Time Display ---
             let dateTimeSpan = document.getElementById('displayDateTime');
             
@@ -542,21 +219,32 @@
                 }
             }
             
-            // Update time immediately and then every second
             updateDateTime();
             setInterval(updateDateTime, 1000);
 
-            // --- Notification Count (Example) ---
-            // You would update this dynamically with data
-            let notificationCount = 0; // Set to your actual count
-            document.getElementById('notificationCount').textContent = notificationCount;
-            document.getElementById('notificationCount1').textContent = notificationCount;
+            // --- Notification Toggle (assuming this is in your main.js, but adding a fallback) ---
+            let notifIcon = document.querySelector('.iconn');
+            let notifBox = document.getElementById('box');
+
+            if (notifIcon && notifBox) {
+                // Check if toggleNotifi is already defined by main.js
+                if (typeof toggleNotifi !== 'function') {
+                    window.toggleNotifi = function() {
+                        notifBox.classList.toggle('active'); // 'active' class probably controls display
+                    }
+                }
+            }
             
-            if (notificationCount === 0) {
-                document.getElementById('notificationItems').innerHTML = '<p>No new notifications</p>';
-            } else {
-                // Example of adding a notification
-                // document.getElementById('notificationItems').innerHTML = '<h4>New Update</h4><p>Your feed level is low.</p>';
+            // --- Sidebar Toggle (assuming this is in your main.js) ---
+            let toggle = document.querySelector('.toggle');
+            let navigation = document.querySelector('.navigation');
+            let main = document.querySelector('.main');
+
+            if (toggle && navigation && main) {
+                toggle.onclick = function() {
+                    navigation.classList.toggle('active');
+                    main.classList.toggle('active');
+                }
             }
         });
     </script>
