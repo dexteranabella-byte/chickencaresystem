@@ -18,6 +18,16 @@
             font-weight: 700;
             color: black; /* As requested */
             margin-bottom: 20px; /* Space between title and video */
+            margin-top: 5px; /* Added small space above title */
+        }
+        /* --- END NEW --- */
+
+        /* --- NEW: Style for the centered timestamp --- */
+        .growthCamera .datetime {
+            text-align: center;
+            font-size: 1.1em; /* Smaller than the title */
+            color: #555; /* A dark grey, not as bold as black */
+            margin-bottom: 5px; /* Small space between timestamp and title */
         }
         /* --- END NEW --- */
 
@@ -166,9 +176,7 @@
                     <ion-icon name="menu-outline"></ion-icon>
                 </div>
 
-                <!-- --- Page Title REMOVED from topbar --- --><div class="datetime">
-                    <span id="displayDateTime"></span>
-                </div>
+                <!-- --- Datetime MOVED from topbar --- -->
 
                 <div class="iconn" onclick="toggleNotifi()">
                     <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt=""> <span id="notificationCount">0</span>
@@ -193,11 +201,23 @@
 
         <!-- ========================= Growth Monitoring ==================== --><div class="growthCamera">
                 
-                <!-- NEW: Title is here, above the feed -->
+                <!-- NEW: Datetime is now here -->
+                <div class="datetime">
+                    <span id="displayDateTime"></span>
+                </div>
+
+                <!-- Title is here, above the feed -->
                 <h1>Growth Tracking</h1>
 
                 <div class="gif-wrapper">
-                    <video src="{{ url_for('static', filename='imgs/Camera is loading.mp4') }}" autoplay loop muted playsinline>
+                    <video src="{{ url_for('static', filename='imgs/Camera is loading.mp4') }}" 
+                           autoplay 
+                           loop 
+                           muted 
+                           playsinline 
+                           oncontextmenu="return false;" 
+                           disablepictureinpicture 
+                           controlsList="nodownload">
                         Your browser does not support the video tag.
                     </video>
                     
@@ -238,7 +258,15 @@
                 </div>
             </div>
 
-            <!--Image Box---><div id="image-container" style="max-width: 1500px; margin: 0 auto; text-align: center; padding: 20px; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); position: relative; top: 50px;">
+            <!--
+                FIX: Added data- attributes to hold the server-rendered URLs.
+                Used single quotes for the Jinja expression as is best practice.
+            -->
+            <div id="image-container" 
+                 style="max-width: 1500px; margin: 0 auto; text-align: center; padding: 20px; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); position: relative; top: 50px;"
+                 data-list-url='{{ url_for("get_image_list") }}'
+                 data-shots-url='{{ url_for("static", filename="shots/") }}'>
+                
                 <h1 style="color: #333; font-size: 28px; margin-bottom: 20px;">Poultry Images</h1>
 
                 <div style="position: relative; overflow: hidden;">
@@ -298,6 +326,12 @@
         var imageFiles = [];
         var autoChangeInterval; // Variable to hold the interval ID
 
+        // FIX: Get URL base from the data- attribute on the image-container
+        const imageContainer = document.getElementById('image-container');
+        const listUrl = imageContainer.dataset.listUrl;
+        const staticShotsUrl = imageContainer.dataset.shotsUrl;
+
+
         function startAutoChange() {
             autoChangeInterval = setInterval(function () {
                 fetchImageList();
@@ -310,8 +344,8 @@
         }
 
         function fetchImageList() {
-            // FIX: Swapped quotes. Use single quotes for JS string, double for Jinja.
-            fetch('{{ url_for("get_image_list") }}') // replace 'get_image_list' with your route
+            // FIX: Use the 'listUrl' variable defined above
+            fetch(listUrl) // Use the variable here
                 .then(response => response.json())
                 .then(data => {
                     if (JSON.stringify(data) !== JSON.stringify(imageFiles)) {
@@ -348,8 +382,7 @@
                 currentImageIndex = 0;
             }
 
-            // FIX: Swapped quotes. Use single quotes for JS string, double for Jinja.
-            const staticShotsUrl = '{{ url_for("static", filename="shots/") }}';
+            // FIX: Use the 'staticShotsUrl' variable defined above
             document.getElementById('current-image-1').src = staticShotsUrl + imageFiles[currentImageIndex];
             document.getElementById('current-image-2').src = staticShotsUrl + imageFiles[(currentImageIndex + 1) % imageFiles.length];
             document.getElementById('current-image-3').src = staticShotsUrl + imageFiles[(currentImageIndex + 2) % imageFiles.length];
