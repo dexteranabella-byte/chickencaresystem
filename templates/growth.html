@@ -6,7 +6,7 @@
     <!-- Links to your existing stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* This minimal style is to make the GIF act like a "live feed" */
+        /* This minimal style is to make the video act like a "live feed" */
         .live-feed-container {
             padding: 20px;
         }
@@ -18,6 +18,7 @@
             margin-bottom: 20px;
         }
 
+        /* This class name is kept for consistency with your design */
         .gif-wrapper {
             width: 100%;
             max-width: 900px; /* Adjust as needed */
@@ -28,11 +29,12 @@
             overflow: hidden;
         }
 
-        .gif-wrapper img {
+        /* This CSS rule is updated from 'img' to 'video' */
+        .gif-wrapper video {
             width: 100%;
             height: auto;
             display: block;
-            /* This makes the image non-clickable and non-interactive */
+            /* This makes the video non-clickable and non-interactive */
             pointer-events: none;
         }
     </style>
@@ -46,7 +48,6 @@
                 <li>
                     <a href="#">
                         <span class="icon">
-                            <!-- This path is from your first file -->
                             <img src="/static/imgs/CC.png">
                         </span>
                         <span class="title1">Chick Care</span>
@@ -153,7 +154,6 @@
 
 
                 <div class="iconn" onclick="toggleNotifi()">
-                    <!-- This path is from your first file -->
                     <img src="/static/imgs/bell.png" alt=""> <span id="notificationCount">0</span>
                 </div>
                 <div class="notifi-box" id="box">
@@ -166,23 +166,24 @@
                 </div>
 
                 <div class="user">
-                    <!-- This path is from your first file -->
                     <img src="/static/imgs/admin.jpg" alt="">
                 </div>
             </div>
 
             <!-- ===== MAIN CONTENT FOR GROWTH TRACKING ===== -->
-            <!-- This replaces the ".schedule" div from your feeding page -->
             <div class="live-feed-container">
                 <h1>Growth Tracking</h1>
                 
                 <div class="gif-wrapper">
                     <!-- 
                       This is the fix:
-                      - Uses the static path you provided.
-                      - The wrapper styles it like a video feed.
+                      - Replaced <img> with <video>
+                      - Added autoplay, loop, muted, and playsinline
+                      - Updated src to the .mp4 file
                     -->
-                    <img src="/static/imgs/Camera is loading.gif" alt="Camera feed loading...">
+                    <video src="/static/imgs/Camera is loading.mp4" autoplay loop muted playsinline>
+                        Your browser does not support the video tag.
+                    </video>
                 </div>
             </div>
             <!-- ===== END OF MAIN CONTENT ===== -->
@@ -192,12 +193,11 @@
 
 
     <!-- Your original scripts -->
-    <!-- Make sure main.js is loaded correctly and handles the sidebar toggle -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 
-    <!-- Added script for datetime and notification (from my previous version, as it's needed) -->
+    <!-- Added script for datetime and notification -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // --- Real-time Date and Time Display ---
