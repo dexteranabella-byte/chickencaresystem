@@ -24,6 +24,7 @@
                 <li><a href="{{ url_for('environment') }}"><span class="icon"><ion-icon name="cloudy-outline"></ion-icon></span><span class="title">Environment</span></a></li>
                 <li><a href="{{ url_for('dashboard') }}"><span class="icon"><ion-icon name="notifications-circle-outline"></ion-icon></span><span class="title">Notifications</span></a></li>
                 
+                <!-- Set this link as active -->
                 <li><a href="{{ url_for('sanitization') }}" class="active"><span class="icon"><ion-icon name="water-outline"></ion-icon></span><span class="title">Sanitization</span></a></li>
 
                 {% if session['user_role'] == 'admin' %}
@@ -53,6 +54,7 @@
             <div class="status">
                 <h1>Sanitization</h1>
 
+                <!-- This cardBox now contains all three cards for proper alignment -->
                 <div class="cardBox">
                     <div class="card">
                         <div>
@@ -75,20 +77,20 @@
                         </div>
                         <button id="stopSprinkle" class="stop-btn">STOP</button>
                     </div>
-                </div>
-            </div>
 
-            <div class="cardBox1">
-                <div class="card">
-                    <div>
-                        <div class="numbers" id="uvc_status"></div>
-                        <div class="cardName">UVC Light</div>
+                    <!-- UVC Light card moved from cardBox1 into cardBox -->
+                    <div class="card">
+                        <div>
+                            <div class="numbers" id="uvc_status"></div>
+                            <div class="cardName">UVC Light</div>
+                        </div>
+                        <div class="iconBx">
+                            <img class="uvcl" id="uvcImage" src="{{ url_for('static', filename='imgs/UVCoff.png') }}">
+                        </div>
+                        <button id="stopUVLight" class="stop-btn">STOP</button>
                     </div>
-                    <div class="iconBx">
-                        <img class="uvcl" id="uvcImage" src="{{ url_for('static', filename='imgs/UVCoff.png') }}">
-                    </div>
-                    <button id="stopUVLight" class="stop-btn">STOP</button>
                 </div>
+                <!-- The empty cardBox1 div has been removed -->
             </div>
 
             <div id="table-body" class="SanitizationTable">
@@ -113,17 +115,77 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
     <script>
+        // --- Script for UVC Image Toggle ---
         function updateUvcImage() {
-            const status = document.getElementById('uvc_status').innerText.trim();
-            const img = document.getElementById('uvcImage');
-            img.src = (status === 'ON') 
-                ? "{{ url_for('static', filename='imgs/UVCon.png') }}" 
-                : "{{ url_for('static', filename='imgs/UVCoff.png') }}";
+            const statusEl = document.getElementById('uvc_status');
+            if (statusEl) {
+                const status = statusEl.innerText.trim();
+                const img = document.getElementById('uvcImage');
+                if (img) {
+                    img.src = (status === 'ON') 
+                            ? "{{ url_for('static', filename='imgs/UVCon.png') }}" 
+                            : "{{ url_for('static', filename='imgs/UVCoff.png') }}";
+                }
+            }
         }
 
-        const observer = new MutationObserver(updateUvcImage);
-        observer.observe(document.getElementById('uvc_status'), { childList: true });
-        updateUvcImage();
+        // --- Observe status changes to update image ---
+        const statusNode = document.getElementById('uvc_status');
+        if (statusNode) {
+            const observer = new MutationObserver(updateUvcImage);
+            observer.observe(statusNode, { childList: true, subtree: true });
+            // Initial check on load
+            updateUvcImage();
+        }
+
+        // --- Datetime and Toggle scripts (from main.js or as fallback) ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Real-time Date and Time Display ---
+            let dateTimeSpan = document.getElementById('displayDateTime');
+            if (dateTimeSpan) {
+                function updateDateTime() {
+                    const now = new Date();
+                    const options = {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    };
+                    dateTimeSpan.textContent = now.toLocaleDateString('en-US', options);
+                }
+                updateDateTime();
+                setInterval(updateDateTime, 1000);
+            }
+
+            // --- Sidebar Toggle (assuming this is in main.js) ---
+            let toggle = document.querySelector('.toggle');
+            let navigation = document.querySelector('.navigation');
+            let main = document.querySelector('.main');
+
+            if (toggle && navigation && main) {
+                if (typeof main.jsToggle !== 'function') { // Avoid overriding main.js
+                    toggle.onclick = function() {
+                        navigation.classList.toggle('active');
+                        main.classList.toggle('active');
+                    }
+                }
+            }
+            
+            // --- Notification Toggle (assuming this is in main.js) ---
+            let notifIcon = document.querySelector('.iconn');
+            let notifBox = document.getElementById('box');
+
+            if (notifIcon && notifBox) {
+                if (typeof toggleNotifi !== 'function') {
+                    window.toggleNotifi = function() {
+                        notifBox.classList.toggle('active');
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>
