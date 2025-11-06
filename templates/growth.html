@@ -11,9 +11,18 @@
             margin-top: 20px; /* Add some space below the topbar */
         }
 
-        /* --- NEW: Style for the H1 title above the feed --- */
+        /* --- NEW: Style for the centered content --- */
+        .growthCamera .centered-header {
+            text-align: center; /* This centers everything inside it */
+        }
+        
+        .growthCamera .datetime-local {
+            font-size: 1.1em; /* Smaller than the title */
+            color: #555; /* A dark grey, not as bold as black */
+            margin-bottom: 5px; /* Small space between timestamp and title */
+        }
+
         .growthCamera h1 {
-            text-align: center;
             font-size: 2.5em; /* Or match your old h1 style */
             font-weight: 700;
             color: black; /* As requested */
@@ -22,14 +31,6 @@
         }
         /* --- END NEW --- */
 
-        /* --- NEW: Style for the centered timestamp --- */
-        .growthCamera .datetime {
-            text-align: center;
-            font-size: 1.1em; /* Smaller than the title */
-            color: #555; /* A dark grey, not as bold as black */
-            margin-bottom: 5px; /* Small space between timestamp and title */
-        }
-        /* --- END NEW --- */
 
         /* This class name is kept for consistency with your design */
         .gif-wrapper {
@@ -51,9 +52,6 @@
             /* This makes the video non-clickable and non-interactive */
             pointer-events: none;
         }
-
-        /* --- REMOVED: .feed-overlay-text style is gone --- */
-
 
         /* You might need to adjust .main.active .topbar's positioning if the new title pushes it */
         .main.active .topbar {
@@ -176,7 +174,8 @@
                     <ion-icon name="menu-outline"></ion-icon>
                 </div>
 
-                <!-- --- Datetime MOVED from topbar --- -->
+                <!-- --- FIX: Added empty datetime div as a spacer to fix top bar layout --- -->
+                <div class="datetime" style="visibility: hidden;"></div>
 
                 <div class="iconn" onclick="toggleNotifi()">
                     <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt=""> <span id="notificationCount">0</span>
@@ -199,32 +198,34 @@
                 </div>
             </div>
 
-        <!-- ========================= Growth Monitoring ==================== --><div class="growthCamera">
-                
+        <!-- ========================= Growth Monitoring ==================== -->
+        <div class="growthCamera">
+            
+            <!-- NEW: Wrapper to center timestamp and title -->
+            <div class="centered-header">
                 <!-- NEW: Datetime is now here -->
-                <div class="datetime">
+                <div class="datetime-local">
                     <span id="displayDateTime"></span>
                 </div>
 
-                <!-- Title is here, above the feed -->
+                <!-- Title is here, inside the centered wrapper -->
                 <h1>Growth Tracking</h1>
-
-                <div class="gif-wrapper">
-                    <video src="{{ url_for('static', filename='imgs/Camera is loading.mp4') }}" 
-                           autoplay 
-                           loop 
-                           muted 
-                           playsinline 
-                           oncontextmenu="return false;" 
-                           disablepictureinpicture 
-                           controlsList="nodownload">
-                        Your browser does not support the video tag.
-                    </video>
-                    
-                    <!-- REMOVED: Overlay Text is gone -->
-                </div>
-
             </div>
+
+            <div class="gif-wrapper">
+                <video src="{{ url_for('static', filename='imgs/Camera is loading.mp4') }}" 
+                       autoplay 
+                       loop 
+                       muted 
+                       playsinline 
+                       oncontextmenu="return false;" 
+                       disablepictureinpicture 
+                       controlsList="nodownload">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+
+        </div>
 
             <!-- Removed these br tags, as margin-top in CSS is preferred for spacing --><div class="monitor-container">
                 <!-- Existing Weight Monitoring --><div class="monitor-section">
@@ -392,7 +393,8 @@
         // --- Toggles, Datetime, and Slider Start ---
         document.addEventListener('DOMContentLoaded', function() {
             // --- Real-time Date and Time Display ---
-            let dateTimeSpan = document.getElementById('displayDateTime');
+            // FIX: This now finds the span with this ID, which is in the main content area
+            let dateTimeSpan = document.getElementById('displayDateTime'); 
             
             function updateDateTime() {
                 if (dateTimeSpan) {
