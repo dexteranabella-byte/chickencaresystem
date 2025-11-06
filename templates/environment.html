@@ -4,221 +4,10 @@
     <meta charset="UTF-8">
     <title>Sanitization | Chick Care</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        /* Restore missing layout and spacing */
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            display: flex;
-            min-height: 100vh;
-            width: 100%;
-        }
-
-        .navigation {
-            width: 260px;
-            background: #0c2d57;
-            color: white;
-            position: fixed;
-            height: 100%;
-            top: 0;
-            left: 0;
-            border-right: 2px solid #173d6a;
-            transition: 0.3s;
-        }
-
-        .navigation ul {
-            margin-top: 20px;
-            padding: 0;
-            list-style: none;
-        }
-
-        .navigation ul li {
-            position: relative;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        .navigation ul li a {
-            text-decoration: none;
-            color: white;
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            transition: 0.3s;
-        }
-
-        .navigation ul li a:hover,
-        .navigation ul li a.active {
-            background: #1a3b70;
-            border-left: 5px solid #ffd32a;
-        }
-
-        .navigation .icon {
-            width: 30px;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 15px;
-        }
-
-        .navigation img {
-            width: 30px;
-            height: 30px;
-        }
-
-        .navigation .title1 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #ffd32a;
-        }
-
-        .main {
-            margin-left: 260px;
-            flex: 1;
-            padding: 20px;
-            background: #fff;
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #0c2d57;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
-        }
-
-        .toggle ion-icon {
-            font-size: 26px;
-            cursor: pointer;
-        }
-
-        .datetime {
-            font-size: 14px;
-            color: #f1f1f1;
-        }
-
-        .user img {
-            width: 40px;
-            border-radius: 50%;
-        }
-
-        .status1 h1 {
-            margin: 30px 0 20px 0;
-            font-size: 24px;
-            color: #0c2d57;
-        }
-
-        .cBox, .cBox1 {
-            display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .cd {
-            flex: 1 1 260px;
-            background: #f0f4fa;
-            border-radius: 15px;
-            text-align: center;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .cd img {
-            width: 80px;
-            margin-top: 10px;
-        }
-
-        .stop-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 8px 16px;
-            margin-top: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .stop-btn:hover {
-            background: #c0392b;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 25px;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            text-align: center;
-            padding: 10px;
-        }
-
-        th {
-            background: #0c2d57;
-            color: white;
-        }
-
-        #box {
-            display: none;
-            position: absolute;
-            right: 40px;
-            top: 70px;
-            background: white;
-            color: black;
-            width: 300px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 100;
-        }
-
-        .notifi-box h2 {
-            font-size: 18px;
-            padding: 15px;
-            background: #0c2d57;
-            color: white;
-            border-radius: 15px 15px 0 0;
-            margin: 0;
-        }
-
-        .notifi-item {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .iconn {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .iconn span {
-            background: red;
-            color: white;
-            font-size: 12px;
-            border-radius: 50%;
-            padding: 3px 7px;
-            position: absolute;
-            top: -5px;
-            right: -5px;
-        }
-
-    </style>
-</head>
+    
+    </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
         <div class="navigation">
             <ul>
                 <li>
@@ -229,24 +18,23 @@
                         <span class="title1">Chick Care</span>
                     </a>
                 </li>
-
-                <li><a href="/main_dashboard"><span class="icon"><ion-icon name="reorder-four-outline"></ion-icon></span><span class="title">Dashboard</span></a></li>
-                <li><a href="/webcam"><span class="icon"><ion-icon name="stats-chart-outline"></ion-icon></span><span class="title">Growth Tracking</span></a></li>
-                <li><a href="/feeding"><span class="icon"><ion-icon name="layers-outline"></ion-icon></span><span class="title">Supplies Stock</span></a></li>
-                <li><a href="/environment"><span class="icon"><ion-icon name="cloudy-outline"></ion-icon></span><span class="title">Environment</span></a></li>
-                <li><a href="/dashboard"><span class="icon"><ion-icon name="notifications-circle-outline"></ion-icon></span><span class="title">Notifications</span></a></li>
-                <li><a href="/sanitization" class="active"><span class="icon"><ion-icon name="water-outline"></ion-icon></span><span class="title">Sanitization</span></a></li>
+                <li><a href="{{ url_for('main_dashboard') }}"><span class="icon"><ion-icon name="reorder-four-outline"></ion-icon></span><span class="title">Dashboard</span></a></li>
+                <li><a href="{{ url_for('growth_monitoring') }}"><span class="icon"><ion-icon name="stats-chart-outline"></ion-icon></span><span class="title">Growth Tracking</span></a></li>
+                <li><a href="{{ url_for('feed_schedule') }}"><span class="icon"><ion-icon name="layers-outline"></ion-icon></span><span class="title">Supplies Stock</span></a></li>
+                <li><a href="{{ url_for('environment') }}"><span class="icon"><ion-icon name="cloudy-outline"></ion-icon></span><span class="title">Environment</span></a></li>
+                <li><a href="{{ url_for('dashboard') }}"><span class="icon"><ion-icon name="notifications-circle-outline"></ion-icon></span><span class="title">Notifications</span></a></li>
+                
+                <li><a href="{{ url_for('sanitization') }}" class="active"><span class="icon"><ion-icon name="water-outline"></ion-icon></span><span class="title">Sanitization</span></a></li>
 
                 {% if session['user_role'] == 'admin' %}
-                <li><a href="/manage_users"><span class="icon"><ion-icon name="people-outline"></ion-icon></span><span class="title">Manage Users</span></a></li>
+                <li><a href="{{ url_for('manage_users') }}"><span class="icon"><ion-icon name="people-outline"></ion-icon></span><span class="title">Manage Users</span></a></li>
                 {% endif %}
 
-                <li><a href="/report"><span class="icon"><ion-icon name="file-tray-stacked-outline"></ion-icon></span><span class="title">Report</span></a></li>
+                <li><a href="{{ url_for('report') }}"><span class="icon"><ion-icon name="file-tray-stacked-outline"></ion-icon></span><span class="title">Report</span></a></li>
                 <li><a href="{{ url_for('logout') }}"><span class="icon"><ion-icon name="log-out-outline"></ion-icon></span><span class="title">Sign Out</span></a></li>
             </ul>
         </div>
 
-        <!-- Main Section -->
         <div class="main">
             <div class="topbar">
                 <div class="toggle"><ion-icon name="menu-outline"></ion-icon></div>
@@ -262,34 +50,47 @@
                 <div class="user"><img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt=""></div>
             </div>
 
-            <!-- Sanitization Status -->
-            <div class="status1">
+            <div class="status">
                 <h1>Sanitization</h1>
 
-                <div class="cBox">
-                    <div class="cd">
-                        <div><div class="num" id="status_cvyr"></div><div class="cName">Conveyor</div></div>
-                        <div class="icBx"><img class="convy" src="{{ url_for('static', filename='imgs/conveyor.png') }}"></div>
+                <div class="cardBox">
+                    <div class="card">
+                        <div>
+                            <div class="numbers" id="status_cvyr"></div>
+                            <div class="cardName">Conveyor</div>
+                        </div>
+                        <div class="iconBx">
+                            <img class="convy" src="{{ url_for('static', filename='imgs/conveyor.png') }}">
+                        </div>
                         <button id="stopConveyor" class="stop-btn">STOP</button>
                     </div>
 
-                    <div class="cd">
-                        <div><div class="num" id="sprkl"></div><div class="cName">Sprinkle</div></div>
-                        <div class="icBx"><img class="sprink" src="{{ url_for('static', filename='imgs/sprinkle.png') }}"></div>
+                    <div class="card">
+                        <div>
+                            <div class="numbers" id="sprkl"></div>
+                            <div class="cardName">Sprinkle</div>
+                        </div>
+                        <div class="iconBx">
+                            <img class="sprink" src="{{ url_for('static', filename='imgs/sprinkle.png') }}">
+                        </div>
                         <button id="stopSprinkle" class="stop-btn">STOP</button>
-                    </div>
-                </div>
-
-                <div class="cBox1">
-                    <div class="cd">
-                        <div><div class="num" id="uvc_status"></div><div class="cName">UVC Light</div></div>
-                        <div class="icBx"><img class="uvcl" id="uvcImage" src="{{ url_for('static', filename='imgs/UVCoff.png') }}"></div>
-                        <button id="stopUVLight" class="stop-btn">STOP</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Table -->
+            <div class="cardBox1">
+                <div class="card">
+                    <div>
+                        <div class="numbers" id="uvc_status"></div>
+                        <div class="cardName">UVC Light</div>
+                    </div>
+                    <div class="iconBx">
+                        <img class="uvcl" id="uvcImage" src="{{ url_for('static', filename='imgs/UVCoff.png') }}">
+                    </div>
+                    <button id="stopUVLight" class="stop-btn">STOP</button>
+                </div>
+            </div>
+
             <div id="table-body" class="SanitizationTable">
                 <table border="1">
                     <thead>
@@ -306,10 +107,10 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
     <script>
         function updateUvcImage() {
