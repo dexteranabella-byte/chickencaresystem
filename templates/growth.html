@@ -2,182 +2,563 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Growth Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Growth Tracking</title>
+    <!-- Imports Google Font 'Inter' -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base Styles */
+        :root {
+            --blue: #2a2185;
+            --white: #fff;
+            --gray: #f5f5f5;
+            --black1: #222;
+            --black2: #999;
+            --sidebar-width: 260px;
+            --sidebar-width-collapsed: 80px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-color: var(--gray);
+        }
+
+        /* Main layout container */
+        .container {
+            position: relative;
+            width: 100%;
+            display: flex;
+        }
+
+        /* Navigation Sidebar */
+        .navigation {
+            position: fixed;
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--blue);
+            border-left: 10px solid var(--blue);
+            transition: width 0.5s;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .navigation.active {
+            width: var(--sidebar-width-collapsed);
+        }
+
+        .navigation ul {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding-left: 5px;
+            padding-top: 40px;
+        }
+
+        .navigation ul li {
+            position: relative;
+            list-style: none;
+            width: 100%;
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+            margin-bottom: 5px;
+        }
+        
+        /* Highlight for active page */
+        .navigation ul li.active {
+            background: var(--gray);
+        }
+
+        .navigation ul li a {
+            position: relative;
+            display: flex;
+            width: 100%;
+            text-decoration: none;
+            color: var(--white);
+            align-items: center;
+        }
+        
+        .navigation ul li.active a {
+            color: var(--black1);
+        }
+
+        .navigation ul li a .icon {
+            position: relative;
+            display: block;
+            min-width: 60px;
+            height: 60px;
+            line-height: 70px;
+            text-align: center;
+        }
+
+        .navigation ul li a .icon ion-icon {
+            font-size: 1.75em;
+        }
+        
+        .navigation ul li a .icon img {
+            width: 40px;
+            height: 40px;
+            margin-top: 10px;
+            object-fit: contain;
+        }
+
+        .navigation ul li a .title {
+            position: relative;
+            display: block;
+            padding-left: 10px;
+            height: 60px;
+            line-height: 60px;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        
+        .navigation .title1 {
+            font-weight: 700;
+            font-size: 1.8em;
+            padding-left: 10px;
+            height: 60px;
+            line-height: 60px;
+            white-space: nowrap;
+            opacity: 1;
+            color: var(--white);
+        }
+
+        /* Hide title when sidebar is collapsed */
+        .navigation.active ul li a .title,
+        .navigation.active .title1 {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .navigation ul li:hover,
+        .navigation ul li.active {
+            background-color: var(--gray);
+        }
+
+        .navigation ul li:hover a,
+        .navigation ul li.active a {
+            color: var(--black1);
+        }
+
+        /* Main Content Area */
+        .main {
+            position: absolute;
+            width: calc(100% - var(--sidebar-width));
+            left: var(--sidebar-width);
+            min-height: 100vh;
+            background: var(--gray);
+            transition: width 0.5s, left 0.5s;
+        }
+
+        .main.active {
+            width: calc(100% - var(--sidebar-width-collapsed));
+            left: var(--sidebar-width-collapsed);
+        }
+
+        /* Top Bar */
+        .topbar {
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background: var(--white);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .toggle {
+            position: relative;
+            font-size: 2.5em;
+            cursor: pointer;
+            color: var(--black1);
+        }
+
+        .datetime {
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--black1);
+        }
+
+        .topbar-right-icons {
+            display: flex;
+            align-items: center;
+        }
+
+        .iconn {
+            position: relative;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+
+        .iconn img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .iconn span {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: red;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .notifi-box {
+            position: absolute;
+            top: 65px;
+            right: 20px;
+            width: 300px;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            display: none; /* Hidden by default */
+            z-index: 200;
+        }
+        
+        .notifi-box.active {
+            display: block; /* Shown when active */
+        }
+
+        .notifi-box h2 {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .notifi-box h2 span {
+            font-size: 0.8em;
+            background: red;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+
+        .notifi-item .text h4 {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: var(--black1);
+        }
+        
+        .notifi-item .text p {
+            font-size: 0.8em;
+            color: var(--black2);
+        }
+
+        .user {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .user img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Growth Tracking Content */
+        .growth-tracking-container {
+            padding: 20px;
+            width: 100%;
+        }
+
+        .growth-tracking-container h1 {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--black1);
+            margin-bottom: 20px;
+        }
+
+        /* This is the container for your GIF */
+        .gif-container {
+            width: 100%;
+            max-width: 900px; /* Adjust max width as needed */
+            margin: 0 auto; /* Center the container */
+            background: #000;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Ensures rounded corners are applied */
+        }
+
+        .gif-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            /* This makes the image non-clickable and non-interactive */
+            pointer-events: none;
+            /* Fallback color if image is loading slowly */
+            background-color: #111;
+        }
+
+    </style>
 </head>
 <body>
 
-<div class="container">
+    <div class="container">
+        <!-- Navigation Sidebar -->
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="icon">
+                            <!-- Using a placeholder as static/imgs/CC.png is a local path -->
+                            <img src="https://placehold.co/40x40/FFFFFF/2a2185?text=CC" alt="Logo">
+                        </span>
+                        <span class="title1">Chick Care</span>
+                    </a>
+                </li>
 
-    <!-- =============== Navigation ================ -->
-    <div class="navigation">
-        <ul>
-            <li>
-                <a href="#">
-                    <span class="icon">
-                        <img src="{{ url_for('static', filename='imgs/CC.png') }}" alt="Logo">
-                    </span>
-                    <span class="title1">Chick Care</span>
-                </a>
-            </li>
+                <li>
+                    <!-- Changed href to a static link -->
+                    <a href="/main_dashboard">
+                        <span class="icon">
+                            <ion-icon name="reorder-four-outline"></ion-icon>
+                        </span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
 
-            <li><a href="{{ url_for('main_dashboard') }}"><span class="icon"><ion-icon name="reorder-four-outline"></ion-icon></span><span class="title">Dashboard</span></a></li>
-            <li><a href="{{ url_for('growth_monitoring') }}"><span class="icon"><ion-icon name="stats-chart-outline"></ion-icon></span><span class="title">Growth Tracking</span></a></li>
-            <li><a href="{{ url_for('feed_schedule') }}"><span class="icon"><ion-icon name="layers-outline"></ion-icon></span><span class="title">Supplies Stock</span></a></li>
-            <li><a href="{{ url_for('environment') }}"><span class="icon"><ion-icon name="cloudy-outline"></ion-icon></span><span class="title">Environment</span></a></li>
-            <li><a href="{{ url_for('dashboard') }}"><span class="icon"><ion-icon name="notifications-circle-outline"></ion-icon></span><span class="title">Notifications</span></a></li>
-            <li><a href="{{ url_for('sanitization') }}"><span class="icon"><ion-icon name="water-outline"></ion-icon></span><span class="title">Sanitization</span></a></li>
+                <!-- This is the active page -->
+                <li class="active">
+                    <a href="/webcam">
+                        <span class="icon">
+                            <ion-icon name="stats-chart-outline"></ion-icon>
+                        </span>
+                        <span class="title">Growth Tracking</span>
+                    </a>
+                </li>
 
-            {% if session.get('user_role') == 'admin' %}
-            <li><a href="{{ url_for('manage_users') }}"><span class="icon"><ion-icon name="people-outline"></ion-icon></span><span class="title">Manage Users</span></a></li>
-            {% endif %}
+                <li>
+                    <a href="/feeding">
+                        <span class="icon">
+                            <ion-icon name="layers-outline"></ion-icon>
+                        </span>
+                        <span class="title">Supplies Stock</span>
+                    </a>
+                </li>
 
-            <li><a href="{{ url_for('report') }}"><span class="icon"><ion-icon name="file-tray-stacked-outline"></ion-icon></span><span class="title">Report</span></a></li>
-            <li><a href="{{ url_for('logout') }}"><span class="icon"><ion-icon name="log-out-outline"></ion-icon></span><span class="title">Sign Out</span></a></li>
-        </ul>
-    </div>
+                <li>
+                    <a href="/environment">
+                        <span class="icon">
+                            <ion-icon name="cloudy-outline"></ion-icon>
+                        </span>
+                        <span class="title">Environment</span>
+                    </a>
+                </li>
 
-    <!-- =============== Main Section ================ -->
-    <div class="main">
-        <div class="topbar">
-            <div class="toggle"><ion-icon name="menu-outline"></ion-icon></div>
+                <li>
+                    <a href="/dashboard">
+                        <span class="icon">
+                            <ion-icon name="notifications-circle-outline"></ion-icon>
+                        </span>
+                        <span class="title">Notifications</span>
+                    </a>
+                </li>
 
-            <div class="datetime"><span id="displayDateTime"></span></div>
+                <li>
+                    <a href="/sanitization">
+                        <span class="icon">
+                            <ion-icon name="water-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sanitization</span>
+                    </a>
+                </li>
+                
+                <!-- Removed Jinja if-statement, showing link by default -->
+                <li>
+                    <a href="/manage_users">
+                        <span class="icon">
+                            <ion-icon name="people-outline"></ion-icon>
+                        </span>
+                        <span class="title">Manage Users</span>
+                    </a>
+                </li>
 
-            <div class="iconn" onclick="toggleNotifi()">
-                <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt="Notifications"> 
-                <span id="notificationCount">0</span>
+                <li>
+                    <a href="/report">
+                        <span class="icon">
+                            <ion-icon name="file-tray-stacked-outline"></ion-icon>
+                        </span>
+                        <span class="title">Report</span>
+                    </a>
+                </li>
+
+                <li>
+                    <!-- Replaced url_for with static /logout link -->
+                    <a href="/logout">
+                        <span class="icon">
+                            <ion-icon name="log-out-outline"></ion-icon>
+                        </span>
+                        <span class="title">Sign Out</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main">
+            <!-- Top Bar -->
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+
+                <div class="datetime">
+                    <span id="displayDateTime"></span>
+                </div>
+
+                <!-- Right side icons -->
+                <div class="topbar-right-icons">
+                    <div class="iconn">
+                        <!-- Placeholder for notification icon -->
+                        <img src="https://placehold.co/24x24/000000/FFFFFF?text=B" alt="Bell">
+                        <span id="notificationCount">0</span>
+                    </div>
+
+                    <div class="user">
+                        <!-- Placeholder for user admin image -->
+                        <img src="https://placehold.co/40x40/CCCCCC/000000?text=A" alt="User">
+                    </div>
+                </div>
             </div>
-
+            
+            <!-- Notification Box (Hidden by default) -->
             <div class="notifi-box" id="box">
                 <h2>Notifications <span id="notificationCount1">0</span></h2>
                 <div class="notifi-item">
-                    <div class="text" id="notificationItems"></div>
+                    <div class="text" id="notificationItems">
+                        <p>No new notifications</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="user">
-                <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="User">
+            <!-- ===== MAIN CONTENT FOR GROWTH TRACKING ===== -->
+            <div class="growth-tracking-container">
+                <h1>Growth Tracking</h1>
+                
+                <!-- This is the container that holds your GIF -->
+                <div class="gif-container">
+                    <!-- 
+                      This is the fix:
+                      1. Uses a standard `<img>` tag.
+                      2. `src` attribute points directly to your GIF's path.
+                      3. `onerror` provides a fallback placeholder in case the path is wrong
+                         or the file is missing, so you don't just see a broken icon.
+                    -->
+                    <img src="static/imgs/Camera is loading.gif" 
+                         alt="Camera feed loading..." 
+                         onerror="this.onerror=null;this.src='https://placehold.co/900x675/000000/FFFFFF?text=Error%3A+Could+not+load+GIF';">
+                </div>
             </div>
+            <!-- ===== END OF MAIN CONTENT ===== -->
+
         </div>
-
-        <!-- =============== Growth Camera Section ================ -->
-        <div class="growthCamera">
-            <h1>Growth Monitoring</h1>
-            <img src="{{ url_for('static', filename='imgs/Camera is loading.gif') }}" alt="Camera is loading...">
-        </div>
-
-        <div class="monitor-container">
-            {% for i in range(1,7) %}
-            <div class="monitor-section">
-                <p>Weight</p>
-                <div class="weight" id="weight{{ i }}"></div>
-            </div>
-            {% endfor %}
-        </div>
-
-        <!-- =============== Poultry Image Display ================ -->
-        <div id="image-container" style="max-width: 1500px; margin: 0 auto; text-align: center; padding: 20px; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.2); position: relative; top: 50px;">
-            <h1 style="color: #333; font-size: 28px; margin-bottom: 20px;">Poultry Images</h1>
-
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <img id="current-image-1" alt="Image 1" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; margin: 0 10px;">
-                <img id="current-image-2" alt="Image 2" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; margin: 0 10px;">
-                <img id="current-image-3" alt="Image 3" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; margin: 0 10px;">
-            </div>
-
-            <div style="display: flex; justify-content: center; margin-top: 10px;">
-                <button onclick="changeImage(-1)" class="btn-nav">&lt;</button>
-                <button onclick="changeImage(1)" class="btn-nav">&gt;</button>
-            </div>
-
-            <p id="no-images-msg" style="color: #888; font-size: 18px; display: none;">No images found in the "shots" folder.</p>
-        </div>
-
-        <!-- =============== Growth Tables ================ -->
-        <div id="table-body1" class="growthTable">
-            <table border="1">
-                <thead>
-                    <tr><th>DateTime</th><th>ChickNumber</th><th>Weight</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div id="table-body5" class="growthTable">
-            <table border="1">
-                <thead>
-                    <tr><th>DateTime</th><th>ChickNumber</th><th>Status</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
     </div>
-</div>
 
-<!-- =============== Scripts ================ -->
-<script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-<script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Ionicons Scripts -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 
-<script>
-let currentImageIndex = 0;
-let imageFiles = [];
-let autoChangeInterval = null;
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // --- Sidebar Toggle ---
+            let toggle = document.querySelector('.toggle');
+            let navigation = document.querySelector('.navigation');
+            let main = document.querySelector('.main');
+            let notifBox = document.querySelector('.notifi-box');
 
-function startAutoChange() {
-    fetchImageList();
-    autoChangeInterval = setInterval(() => {
-        fetchImageList();
-        changeImage(1);
-    }, 5000);
-}
-
-function fetchImageList() {
-    fetch("{{ url_for('get_image_list') }}")
-        .then(res => res.json())
-        .then(data => {
-            if (JSON.stringify(data) !== JSON.stringify(imageFiles)) {
-                imageFiles = data;
-                changeImage(0);
+            toggle.onclick = function() {
+                navigation.classList.toggle('active');
+                main.classList.toggle('active');
+                
+                // Close notification box if open
+                if (notifBox.classList.contains('active')) {
+                    notifBox.classList.remove('active');
+                }
             }
-        })
-        .catch(err => console.error("Error fetching image list:", err));
-}
 
-function changeImage(offset) {
-    if (imageFiles.length === 0) {
-        document.getElementById('no-images-msg').style.display = "block";
-        return;
-    }
-    document.getElementById('no-images-msg').style.display = "none";
-    currentImageIndex = (currentImageIndex + offset + imageFiles.length) % imageFiles.length;
+            // --- Notification Toggle ---
+            let notifIcon = document.querySelector('.iconn');
+            if (notifIcon) {
+                notifIcon.onclick = function(e) {
+                    e.stopPropagation(); // Prevents click from closing it immediately
+                    notifBox.classList.toggle('active');
+                }
+            }
+            
+            // --- Close Notification Box when clicking outside ---
+            document.addEventListener('click', function(e) {
+                if (notifBox && notifIcon) {
+                    // If click is outside the box AND not on the icon
+                    if (!notifBox.contains(e.target) && !notifIcon.contains(e.target)) {
+                        notifBox.classList.remove('active');
+                    }
+                }
+            });
 
-    const getImagePath = idx => "{{ url_for('static', filename='shots/') }}" + imageFiles[(idx + imageFiles.length) % imageFiles.length];
+            // --- Real-time Date and Time Display ---
+            let dateTimeSpan = document.getElementById('displayDateTime');
+            
+            function updateDateTime() {
+                if (dateTimeSpan) {
+                    const now = new Date();
+                    const options = {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    };
+                    dateTimeSpan.textContent = now.toLocaleDateString('en-US', options);
+                }
+            }
+            
+            // Update time immediately and then every second
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
 
-    document.getElementById('current-image-1').src = getImagePath(currentImageIndex);
-    document.getElementById('current-image-2').src = getImagePath(currentImageIndex + 1);
-    document.getElementById('current-image-3').src = getImagePath(currentImageIndex + 2);
-}
-
-document.addEventListener("DOMContentLoaded", startAutoChange);
-</script>
-
-<style>
-.btn-nav {
-    background-color: #4285f4;
-    color: white;
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-.btn-nav:hover { opacity: 1; }
-</style>
-
+            // --- Notification Count (Example) ---
+            // You would update this dynamically with data
+            let notificationCount = 0; // Set to your actual count
+            document.getElementById('notificationCount').textContent = notificationCount;
+            document.getElementById('notificationCount1').textContent = notificationCount;
+            
+            if (notificationCount === 0) {
+                document.getElementById('notificationItems').innerHTML = '<p>No new notifications</p>';
+            } else {
+                // Example of adding a notification
+                // document.getElementById('notificationItems').innerHTML = '<h4>New Update</h4><p>Your feed level is low.</p>';
+            }
+        });
+    </script>
 </body>
 </html>
