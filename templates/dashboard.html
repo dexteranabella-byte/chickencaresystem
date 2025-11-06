@@ -15,7 +15,7 @@
                 <li>
                     <a href="#">
                         <span class="icon">
-                            <img src="static/imgs/CC.png">
+                            <img src="{{ url_for('static', filename='imgs/CC.png') }}">
                         </span>
                         <span class="title1">Chick Care</span>
                     </a>
@@ -58,7 +58,7 @@
                 </li>
 
                 <li>
-                    <a href="/dashboard">
+                    <a href="/dashboard" class="active">
                         <span class="icon">
                             <ion-icon name="notifications-circle-outline"></ion-icon>
                         </span>
@@ -97,7 +97,8 @@
                 </li>
 
                 <li>
-                    <a href="/login">
+                    <!-- ✅ Fixed logout route -->
+                    <a href="{{ url_for('logout') }}">
                         <span class="icon">
                             <ion-icon name="log-out-outline"></ion-icon>
                         </span>
@@ -118,55 +119,42 @@
                     <span id="displayDateTime"></span>
                 </div>
 
-		       <div class="iconn" onclick="toggleNotifi()">
-			    <img src="static/imgs/bell.png" alt=""> <span id="notificationCount">0</span>
-		        </div>
-		        <div class="notifi-box" id="box">
-			        <h2>Notifications <span id="notificationCount1">0</span></h2>
-			    <div class="notifi-item">
-
-				    <div class="text" id="notificationItems">
-
-			        </div>
-			    </div>
-
-
-		        </div>
-
-
+                <div class="iconn" onclick="toggleNotifi()">
+                    <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt=""> 
+                    <span id="notificationCount">0</span>
+                </div>
+                <div class="notifi-box" id="box">
+                    <h2>Notifications <span id="notificationCount1">0</span></h2>
+                    <div class="notifi-item">
+                        <div class="text" id="notificationItems"></div>
+                    </div>
+                </div>
 
                 <div class="user">
-                    <img src="static/imgs/admin.jpg" alt="">
+                    <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="">
                 </div>
             </div>
 
-
-    <!-- ========================= Main ==================== -->
-
-    <div class="Notifications">
+            <!-- ========================= Main Content ==================== -->
+            <div class="Notifications">
                 <h1>Notifications</h1>
-
             </div>
 
-    <div id="table-body4" class="NotifTable">
+            <div id="table-body4" class="NotifTable">
                 <!-- Data table -->
-            <table border="1">
-            <thead>
-                <tr>
-                    <th>DateTime</th>
-                    <th>Message</th>
-                </tr>
-            </thead>
-            <tbody>
-            <!-- Table data will be dynamically loaded here -->
-            </tbody>
-            </table>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>DateTime</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Table data will be dynamically loaded here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-
-
-
-</div>
     </div>
 
     <!-- ====== ionicons ======= -->
@@ -175,5 +163,4 @@
     <!-- =========== Scripts =========  -->
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </body>
-
 </html>
