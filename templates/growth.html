@@ -7,295 +7,177 @@
 </head>
 <body>
 
-    <div class="container">
-        <div class="navigation">
-            <ul>
-                <li>
-                    <a href="#">
-                        <span class="icon">
-                            <img src="{{ url_for('static', filename='imgs/CC.png') }}">
-                        </span>
-                        <span class="title1">Chick Care</span>
-                    </a>
-                </li>
+<div class="container">
 
-                <li>
-                    <a href="{{ url_for('main_dashboard') }}"> <span class="icon">
-                            <ion-icon name="reorder-four-outline"></ion-icon>
-                        </span>
-                        <span class="title">Dashboard</span>
-                    </a>
-                </li>
+    <!-- =============== Navigation ================ -->
+    <div class="navigation">
+        <ul>
+            <li>
+                <a href="#">
+                    <span class="icon">
+                        <img src="{{ url_for('static', filename='imgs/CC.png') }}" alt="Logo">
+                    </span>
+                    <span class="title1">Chick Care</span>
+                </a>
+            </li>
 
-                <li>
-                    <a href="{{ url_for('growth_monitoring') }}"> <span class="icon">
-                            <ion-icon name="stats-chart-outline"></ion-icon>
-                        </span>
-                        <span class="title">Growth Tracking</span>
-                    </a>
-                </li>
+            <li><a href="{{ url_for('main_dashboard') }}"><span class="icon"><ion-icon name="reorder-four-outline"></ion-icon></span><span class="title">Dashboard</span></a></li>
+            <li><a href="{{ url_for('growth_monitoring') }}"><span class="icon"><ion-icon name="stats-chart-outline"></ion-icon></span><span class="title">Growth Tracking</span></a></li>
+            <li><a href="{{ url_for('feed_schedule') }}"><span class="icon"><ion-icon name="layers-outline"></ion-icon></span><span class="title">Supplies Stock</span></a></li>
+            <li><a href="{{ url_for('environment') }}"><span class="icon"><ion-icon name="cloudy-outline"></ion-icon></span><span class="title">Environment</span></a></li>
+            <li><a href="{{ url_for('dashboard') }}"><span class="icon"><ion-icon name="notifications-circle-outline"></ion-icon></span><span class="title">Notifications</span></a></li>
+            <li><a href="{{ url_for('sanitization') }}"><span class="icon"><ion-icon name="water-outline"></ion-icon></span><span class="title">Sanitization</span></a></li>
 
-                <li>
-                    <a href="{{ url_for('feed_schedule') }}"> <span class="icon">
-                            <ion-icon name="layers-outline"></ion-icon>
-                        </span>
-                        <span class="title">Supplies Stock</span>
-                    </a>
-                </li>
+            {% if session.get('user_role') == 'admin' %}
+            <li><a href="{{ url_for('manage_users') }}"><span class="icon"><ion-icon name="people-outline"></ion-icon></span><span class="title">Manage Users</span></a></li>
+            {% endif %}
 
-                <li>
-                    <a href="{{ url_for('environment') }}"> <span class="icon">
-                            <ion-icon name="cloudy-outline"></ion-icon>
-                        </span>
-                        <span class="title">Environment</span>
-                    </a>
-                </li>
+            <li><a href="{{ url_for('report') }}"><span class="icon"><ion-icon name="file-tray-stacked-outline"></ion-icon></span><span class="title">Report</span></a></li>
+            <li><a href="{{ url_for('logout') }}"><span class="icon"><ion-icon name="log-out-outline"></ion-icon></span><span class="title">Sign Out</span></a></li>
+        </ul>
+    </div>
 
-                <li>
-                    <a href="{{ url_for('dashboard') }}"> <span class="icon">
-                            <ion-icon name="notifications-circle-outline"></ion-icon>
-                        </span>
-                        <span class="title">Notifications</span>
-                    </a>
-                </li>
+    <!-- =============== Main Section ================ -->
+    <div class="main">
+        <div class="topbar">
+            <div class="toggle"><ion-icon name="menu-outline"></ion-icon></div>
 
-                <li>
-                    <a href="{{ url_for('sanitization') }}"> <span class="icon">
-                            <ion-icon name="water-outline"></ion-icon>
-                        </span>
-                        <span class="title">Sanitization</span>
-                    </a>
-                </li>
+            <div class="datetime"><span id="displayDateTime"></span></div>
 
-                {% if session['user_role'] == 'admin' %}
-                <li>
-                    <a href="{{ url_for('manage_users') }}">
-                        <span class="icon">
-                            <ion-icon name="people-outline"></ion-icon>
-                        </span>
-                        <span class="title">Manage Users</span>
-                    </a>
-                </li>
-                {% endif %}
+            <div class="iconn" onclick="toggleNotifi()">
+                <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt="Notifications"> 
+                <span id="notificationCount">0</span>
+            </div>
 
-                <li>
-                    <a href="{{ url_for('report') }}"> <span class="icon">
-                            <ion-icon name="file-tray-stacked-outline"></ion-icon>
-                        </span>
-                        <span class="title">Report</span>
-                    </a>
-                </li>
+            <div class="notifi-box" id="box">
+                <h2>Notifications <span id="notificationCount1">0</span></h2>
+                <div class="notifi-item">
+                    <div class="text" id="notificationItems"></div>
+                </div>
+            </div>
 
-                <li>
-                    <a href="{{ url_for('logout') }}">
-                        <span class="icon">
-                            <ion-icon name="log-out-outline"></ion-icon>
-                        </span>
-                        <span class="title">Sign Out</span>
-                    </a>
-                </li>
-            </ul>
+            <div class="user">
+                <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="User">
+            </div>
         </div>
 
-        <div class="main">
-            <div class="topbar">
-                <div class="toggle">
-                    <ion-icon name="menu-outline"></ion-icon>
-                </div>
+        <!-- =============== Growth Camera Section ================ -->
+        <div class="growthCamera">
+            <h1>Growth Monitoring</h1>
+            <img src="{{ url_for('static', filename='imgs/Camera is loading.gif') }}" alt="Camera is loading...">
+        </div>
 
-                <div class="datetime">
-                    <span id="displayDateTime"></span>
-                </div>
-
-                <div class="iconn" onclick="toggleNotifi()">
-                    <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt=""> <span id="notificationCount">0</span>
-                </div>
-                <div class="notifi-box" id="box">
-                    <h2>Notifications <span id="notificationCount1">0</span></h2>
-                <div class="notifi-item">
-
-                    <div class="text" id="notificationItems">
-
-                    </div>
-                </div>
-
-
-                </div>
-
-
-                <div class="user">
-                    <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="">
-                </div>
+        <div class="monitor-container">
+            {% for i in range(1,7) %}
+            <div class="monitor-section">
+                <p>Weight</p>
+                <div class="weight" id="weight{{ i }}"></div>
             </div>
+            {% endfor %}
+        </div>
 
-            <div class="growthCamera">
+        <!-- =============== Poultry Image Display ================ -->
+        <div id="image-container" style="max-width: 1500px; margin: 0 auto; text-align: center; padding: 20px; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.2); position: relative; top: 50px;">
+            <h1 style="color: #333; font-size: 28px; margin-bottom: 20px;">Poultry Images</h1>
 
-                <h1>Growth Monitoring</h1>
-                
-                <img src="{{ url_for('static', filename='imgs/Camera is loading.gif') }}" alt="Camera is loading...">
-
-            </div>
-
-            <br><br><br><br><br>
-
-            <div class="monitor-container">
-                <div class="monitor-section">
-                    <p>Weight</p>
-                    <div class="weight" id="weight"></div>
-                </div>
-
-                <div class="monitor-section">
-                    <p>Weight</p>
-                    <div class="weight" id="weight2"></div>
-                </div>
-
-                <div class="monitor-section">
-                    <p>Weight</p>
-                    <div class="weight" id="weight3"></div>
-                </div>
-
-                <div class="monitor-section">
-                    <p>Weight</p>
-                    <div class="weight" id="weight4"></div>
-                </div>
-
-                <div class="monitor-section">
-                    <p>Weight</p>
-                    <div class="weight" id="weight5"></div>
-                </div>
-
-                <div class="monitor-section">
-                    <p>Weight</p>
-                    <div class="weight" id="weight6"></div>
-                </div>
-            </div>
-
-            <div id="image-container" style="max-width: 1500px; margin: 0 auto; text-align: center; padding: 20px; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); position: relative; top: 50px;">
-                <h1 style="color: #333; font-size: 28px; margin-bottom: 20px;">Poultry Images</h1>
-
-            <div style="position: relative; overflow: hidden;">
-
-            <div style="display: flex; align-items: center; justify-content: space-between; position: relative;">
-
-                <img id="current-image-1" alt="Current Image" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); margin: 0 10px;">
-
-                <img id="current-image-2" alt="Current Image" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); margin: 0 10px;">
-
-                <img id="current-image-3" alt="Current Image" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); margin: 0 10px;">
-
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <img id="current-image-1" alt="Image 1" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; margin: 0 10px;">
+                <img id="current-image-2" alt="Image 2" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; margin: 0 10px;">
+                <img id="current-image-3" alt="Image 3" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; margin: 0 10px;">
             </div>
 
             <div style="display: flex; justify-content: center; margin-top: 10px;">
-
-                <button onclick="changeImage(-1)" style="background-color: #4285f4; color: white; padding: 10px 20px; margin: auto; border: none; border-radius: 5px; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7;">&lt;</button>
-
-                <button onclick="changeImage(1)" style="background-color: #4285f4; color: white; padding: 10px 20px; margin: auto; border: none; border-radius: 5px; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7;">&gt;</button>
-
-            </div>
-                <script>
-                    // THIS LINE IS NOW FIXED (UNCOMMENTED)
-                    var currentImageIndex = 0; 
-                    var imageFiles = [];
-                    var autoChangeInterval; // Variable to hold the interval ID
-
-                    function startAutoChange() {
-                        autoChangeInterval = setInterval(function () {
-                            fetchImageList();
-                            changeImage(1); // Change to the next photo
-                        }, 2000); // Check for updates every 5 seconds (adjust as needed)
-                    }
-
-                    function stopAutoChange() {
-                        clearInterval(autoChangeInterval); // Stop automatic photo changing
-                    }
-
-                    function fetchImageList() {
-                        // NOTE: This will only work if you add the @app.route("/get_image_list")
-                        // route to your app.py file.
-                        fetch("{{ url_for('get_image_list') }}")
-                            .then(response => response.json())
-                            .then(data => {
-                                if (JSON.stringify(data) !== JSON.stringify(imageFiles)) {
-                                    imageFiles = data;
-                                }
-                            })
-                            .catch(error => console.error("Error fetching image list:", error));
-                    }
-
-                    function changeImage(offset) {
-                        currentImageIndex += offset;
-
-                        if (currentImageIndex < 0) {
-                            currentImageIndex = imageFiles.length - 1;
-                        } else if (currentImageIndex >= imageFiles.length) {
-                            currentImageIndex = 0;
-                        }
-
-                        if (imageFiles.length > 0) {
-                            // This pathing assumes your 'shots' folder is inside your 'static' folder
-                            // e.g., /static/shots/image1.jpg
-                            // This code is correct, but it needs the server to send the file list.
-                            document.getElementById('current-image-1').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[currentImageIndex];
-                            document.getElementById('current-image-2').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[(currentImageIndex + 1) % imageFiles.length];
-                            document.getElementById('current-image-3').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[(currentImageIndex + 2) % imageFiles.length];
-                            document.getElementById('no-images-msg').style.display = "none";
-                        } else {
-                            document.getElementById('no-images-msg').style.display = "block";
-                        }
-                    }
-
-                    // Start automatic photo changing when the page loads
-                    startAutoChange();
-
-                </script>
-
+                <button onclick="changeImage(-1)" class="btn-nav">&lt;</button>
+                <button onclick="changeImage(1)" class="btn-nav">&gt;</button>
             </div>
 
+            <p id="no-images-msg" style="color: #888; font-size: 18px; display: none;">No images found in the "shots" folder.</p>
+        </div>
 
-                <p id="no-images-msg" style="color: #888; font-size: 18px; display: none;">No images found in the "shots" folder.</p>
+        <!-- =============== Growth Tables ================ -->
+        <div id="table-body1" class="growthTable">
+            <table border="1">
+                <thead>
+                    <tr><th>DateTime</th><th>ChickNumber</th><th>Weight</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
-            </div>
+        <div id="table-body5" class="growthTable">
+            <table border="1">
+                <thead>
+                    <tr><th>DateTime</th><th>ChickNumber</th><th>Status</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
-            <div id="table-body1" class="growthTable">
-                <table border="1">
-                    <thead>
-                    <tr>
-                        <th>DateTime</th>
-                        <th>ChickNumber</th>
-                        <th>Weight</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
+    </div>
+</div>
 
-            <div id="table-body5" class="growthTable">
-                <table border="1">
-                    <thead>
-                    <tr>
-                        <th>DateTime</th>
-                        <th>ChickNumber</th>
-                        <th>Status</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
+<!-- =============== Scripts ================ -->
+<script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-            </div>
+<script>
+let currentImageIndex = 0;
+let imageFiles = [];
+let autoChangeInterval = null;
 
-            </div>
+function startAutoChange() {
+    fetchImageList();
+    autoChangeInterval = setInterval(() => {
+        fetchImageList();
+        changeImage(1);
+    }, 5000);
+}
 
+function fetchImageList() {
+    fetch("{{ url_for('get_image_list') }}")
+        .then(res => res.json())
+        .then(data => {
+            if (JSON.stringify(data) !== JSON.stringify(imageFiles)) {
+                imageFiles = data;
+                changeImage(0);
+            }
+        })
+        .catch(err => console.error("Error fetching image list:", err));
+}
 
+function changeImage(offset) {
+    if (imageFiles.length === 0) {
+        document.getElementById('no-images-msg').style.display = "block";
+        return;
+    }
+    document.getElementById('no-images-msg').style.display = "none";
+    currentImageIndex = (currentImageIndex + offset + imageFiles.length) % imageFiles.length;
 
+    const getImagePath = idx => "{{ url_for('static', filename='shots/') }}" + imageFiles[(idx + imageFiles.length) % imageFiles.length];
 
+    document.getElementById('current-image-1').src = getImagePath(currentImageIndex);
+    document.getElementById('current-image-2').src = getImagePath(currentImageIndex + 1);
+    document.getElementById('current-image-3').src = getImagePath(currentImageIndex + 2);
+}
 
-    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+document.addEventListener("DOMContentLoaded", startAutoChange);
+</script>
 
+<style>
+.btn-nav {
+    background-color: #4285f4;
+    color: white;
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.btn-nav:hover { opacity: 1; }
+</style>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
