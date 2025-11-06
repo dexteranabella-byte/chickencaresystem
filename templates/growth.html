@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Growth Tracking</title>
-    <!-- Links to your existing stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- ======= Styles ====== --><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         /* This minimal style is to make the video act like a "live feed" */
         .live-feed-container {
-            padding: 20px;
+            padding: 20px; /* Adjust as needed */
+            margin-top: 20px; /* Add some space below the topbar */
         }
 
-        .live-feed-container h1 {
-            font-size: 2em; /* Or whatever your h1 style is in style.css */
+        /* --- NEW: Style for the Growth Tracking text in the topbar --- */
+        .topbar .page-title {
+            font-size: 1.5em; /* Adjust font size to match other topbar elements */
             font-weight: 700;
-            color: #222;
-            margin-bottom: 20px;
+            color: var(--black2); /* Use a variable from your style.css or a suitable dark color */
+            margin-left: 20px; /* Space from the toggle icon */
+            display: flex; /* Allow it to sit next to other items */
+            align-items: center; /* Vertically align with other topbar elements */
         }
+        /* --- END NEW --- */
+
 
         /* This class name is kept for consistency with your design */
         .gif-wrapper {
@@ -37,18 +42,32 @@
             /* This makes the video non-clickable and non-interactive */
             pointer-events: none;
         }
+
+        /* You might need to adjust .main.active .topbar's positioning if the new title pushes it */
+        .main.active .topbar {
+            left: 110px; /* Example adjustment, check your original .main.active .topbar styles */
+            width: calc(100% - 110px); /* Example adjustment */
+        }
+
+        /* Further adjustments for monitor-container and image-container for better spacing */
+        .monitor-container, #image-container {
+            margin-top: 70px; /* Give more space below the video feed */
+        }
+
+        .growthTable {
+            margin-top: 50px; /* Add space between elements */
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Your original navigation -->
+    <!-- =============== Navigation ================ --><div class="container">
         <div class="navigation">
             <ul>
                 <li>
                     <a href="#">
                         <span class="icon">
-                            <img src="/static/imgs/CC.png">
+                            <img src="{{ url_for('static', filename='imgs/CC.png') }}">
                         </span>
                         <span class="title1">Chick Care</span>
                     </a>
@@ -63,8 +82,7 @@
                     </a>
                 </li>
 
-                <!-- Added 'active' class to highlight this page -->
-                <li class="active">
+                <!-- Set this item as active --><li class="active">
                     <a href="/webcam">
                         <span class="icon">
                             <ion-icon name="stats-chart-outline"></ion-icon>
@@ -109,8 +127,7 @@
                     </a>
                 </li>
 
-                <!-- Jinja block for admin-only link -->
-                {% if session['user_role'] == 'admin' %}
+                <!-- Only show "Manage Users" if the logged-in user is an admin -->{% if session['user_role'] == 'admin' %}
                 <li>
                     <a href="/manage_users">
                         <span class="icon">
@@ -131,7 +148,7 @@
                 </li>
 
                 <li>
-                    <a href="{{ url_for('logout') }}">
+                    <!-- Corrected logout link --><a href="{{ url_for('logout') }}">
                         <span class="icon">
                             <ion-icon name="log-out-outline"></ion-icon>
                         </span>
@@ -141,64 +158,195 @@
             </ul>
         </div>
 
-        <!-- Your original main content area -->
-        <div class="main">
+        <!-- ========================= Main ==================== --><div class="main">
             <div class="topbar">
                 <div class="toggle">
                     <ion-icon name="menu-outline"></ion-icon>
                 </div>
 
-                <div class="datetime">
+                <!-- --- NEW: Page Title in Topbar --- --><h2 class="page-title">Growth Tracking</h2>
+                <!-- --- END NEW --- --><div class="datetime">
                     <span id="displayDateTime"></span>
                 </div>
 
-
                 <div class="iconn" onclick="toggleNotifi()">
-                    <img src="/static/imgs/bell.png" alt=""> <span id="notificationCount">0</span>
+                    <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt=""> <span id="notificationCount">0</span>
                 </div>
                 <div class="notifi-box" id="box">
                     <h2>Notifications <span id="notificationCount1">0</span></h2>
-                    <div class="notifi-item">
-                        <div class="text" id="notificationItems">
-                            <!-- Notification content goes here -->
-                        </div>
+                <div class="notifi-item">
+
+                    <div class="text" id="notificationItems">
+
                     </div>
                 </div>
 
+
+                </div>
+
+
                 <div class="user">
-                    <img src="/static/imgs/admin.jpg" alt="">
+                    <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="">
                 </div>
             </div>
 
-            <!-- ===== MAIN CONTENT FOR GROWTH TRACKING ===== -->
-            <div class="live-feed-container">
-                <h1>Growth Tracking</h1>
-                
-                <div class="gif-wrapper">
-                    <!-- 
-                      This is the fix:
-                      - Replaced <img> with <video>
-                      - Added autoplay, loop, muted, and playsinline
-                      - Updated src to the .mp4 file
-                    -->
-                    <video src="/static/imgs/Camera is loading.mp4" autoplay loop muted playsinline>
+        <!-- ========================= Growth Monitoring ==================== --><div class="growthCamera">
+                <!-- Removed H1 from here, it's now in the topbar --><div class="gif-wrapper">
+                    <video src="{{ url_for('static', filename='imgs/Camera is loading.mp4') }}" autoplay loop muted playsinline>
                         Your browser does not support the video tag.
                     </video>
                 </div>
-            </div>
-            <!-- ===== END OF MAIN CONTENT ===== -->
 
+            </div>
+
+            <!-- Removed these br tags, as margin-top in CSS is preferred for spacing --><div class="monitor-container">
+                <!-- Existing Weight Monitoring --><div class="monitor-section">
+                    <p>Weight</p>
+                    <div class="weight" id="weight"></div>
+                </div>
+
+                <!-- Additional Weight Monitoring Sections --><div class="monitor-section">
+                    <p>Weight</p>
+                    <div class="weight" id="weight2"></div>
+                </div>
+
+                <div class="monitor-section">
+                    <p>Weight</p>
+                    <div class="weight" id="weight3"></div>
+                </div>
+
+                <div class="monitor-section">
+                    <p>Weight</p>
+                    <div class="weight" id="weight4"></div>
+                </div>
+
+                <div class="monitor-section">
+                    <p>Weight</p>
+                    <div class="weight" id="weight5"></div>
+                </div>
+
+                <div class="monitor-section">
+                    <p>Weight</p>
+                    <div class="weight" id="weight6"></div>
+                </div>
+            </div>
+
+            <!--Image Box---><div id="image-container" style="max-width: 1500px; margin: 0 auto; text-align: center; padding: 20px; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); position: relative; top: 50px;">
+                <h1 style="color: #333; font-size: 28px; margin-bottom: 20px;">Poultry Images</h1>
+
+                <div style="position: relative; overflow: hidden;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; position: relative;">
+                        <img id="current-image-1" alt="Current Image" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); margin: 0 10px;">
+                        <img id="current-image-2" alt="Current Image" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); margin: 0 10px;">
+                        <img id="current-image-3" alt="Current Image" style="max-width: 30%; height: auto; border: 2px solid #ddd; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); margin: 0 10px;">
+                    </div>
+
+                    <!-- Buttons below images --><div style="display: flex; justify-content: center; margin-top: 10px;">
+                        <button onclick="changeImage(-1)" style="background-color: #4285f4; color: white; padding: 10px 20px; margin: auto; border: none; border-radius: 5px; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7;">&lt;</button>
+                        <button onclick="changeImage(1)" style="background-color: #4285f4; color: white; padding: 10px 20px; margin: auto; border: none; border-radius: 5px; cursor: pointer; opacity: 0.7;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7;">&gt;</button>
+                    </div>
+                </div>
+
+                <p id="no-images-msg" style="color: #888; font-size: 18px; display: none;">No images found in the "shots" folder.</p>
+            </div>
+
+            <div id="table-body1" class="growthTable">
+                <!-- Data table --><table border="1">
+                    <thead>
+                    <tr>
+                        <th>DateTime</th>
+                        <th>ChickNumber</th>
+                        <th>Weight</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Table data will be dynamically loaded here --></tbody>
+                </table>
+            </div>
+
+            <div id="table-body5" class="growthTable">
+                <!-- Data table --><table border="1">
+                    <thead>
+                    <tr>
+                        <th>DateTime</th>
+                        <th>ChickNumber</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Table data will be dynamically loaded here --></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-
-    <!-- Your original scripts -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <!-- ====== ionicons ======= --><script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 
-    <!-- Added script for datetime and notification -->
-    <script>
+    <!-- =========== Scripts =========  --><script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <!-- =========== Combined Page Scripts =========  --><script>
+        // --- Image Slider Script ---
+        var currentImageIndex = 0;
+        var imageFiles = [];
+        var autoChangeInterval; // Variable to hold the interval ID
+
+        function startAutoChange() {
+            autoChangeInterval = setInterval(function () {
+                fetchImageList();
+                changeImage(1); // Change to the next photo
+            }, 2000); // Check for updates every 2 seconds
+        }
+
+        function stopAutoChange() {
+            clearInterval(autoChangeInterval); // Stop automatic photo changing
+        }
+
+        function fetchImageList() {
+            fetch("{{ url_for('get_image_list') }}") // replace 'get_image_list' with your route
+                .then(response => response.json())
+                .then(data => {
+                    if (JSON.stringify(data) !== JSON.stringify(imageFiles)) {
+                        imageFiles = data;
+                        // If image list changes, re-render immediately to show new images
+                        if (imageFiles.length > 0) {
+                            changeImage(0); // Display the first image in the new list
+                            document.getElementById('no-images-msg').style.display = "none";
+                        } else {
+                            document.getElementById('current-image-1').src = "";
+                            document.getElementById('current-image-2').src = "";
+                            document.getElementById('current-image-3').src = "";
+                            document.getElementById('no-images-msg').style.display = "block";
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching image list:", error);
+                    document.getElementById('no-images-msg').style.display = "block";
+                });
+        }
+
+        function changeImage(offset) {
+            if (imageFiles.length === 0) {
+                document.getElementById('no-images-msg').style.display = "block";
+                return;
+            }
+            
+            currentImageIndex += offset;
+
+            if (currentImageIndex < 0) {
+                currentImageIndex = imageFiles.length - 1;
+            } else if (currentImageIndex >= imageFiles.length) {
+                currentImageIndex = 0;
+            }
+
+            document.getElementById('current-image-1').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[currentImageIndex];
+            document.getElementById('current-image-2').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[(currentImageIndex + 1) % imageFiles.length];
+            document.getElementById('current-image-3').src = "{{ url_for('static', filename='shots/') }}" + imageFiles[(currentImageIndex + 2) % imageFiles.length];
+            document.getElementById('no-images-msg').style.display = "none";
+        }
+
+        // --- Toggles, Datetime, and Slider Start ---
         document.addEventListener('DOMContentLoaded', function() {
             // --- Real-time Date and Time Display ---
             let dateTimeSpan = document.getElementById('displayDateTime');
@@ -246,6 +394,11 @@
                     main.classList.toggle('active');
                 }
             }
+
+            // --- Start Image Slider ---
+            // Fetch images first, then start the auto-change
+            fetchImageList(); 
+            startAutoChange();
         });
     </script>
 </body>
