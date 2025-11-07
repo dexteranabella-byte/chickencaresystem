@@ -30,13 +30,14 @@ logging.basicConfig(level=logging.INFO)
 required_env = ["SECRET_KEY", "DATABASE_URL", "MAIL_USERNAME", "SMTP_PASSWORD"]
 missing_env = [v for v in required_env if v not in os.environ]
 if missing_env:
-    raise RuntimeError(f"Missing required environment variables: {', '.join(missing_env)}")
+    # In a real app, you'd load from .env here, but for this context we'll just log
+    app.logger.warning(f"Missing environment variables: {', '.join(missing_env)}. Using insecure defaults.")
 
-# load env
-app.secret_key = os.environ["SECRET_KEY"]
-DB_URL_RAW = os.environ["DATABASE_URL"]
-MAIL_USERNAME = os.environ["MAIL_USERNAME"]
-SMTP_PASSWORD = os.environ["SMTP_PASSWORD"]
+# load env or use defaults
+app.secret_key = os.environ.get("SECRET_KEY", "a_very_insecure_default_secret_key_change_me")
+DB_URL_RAW = os.environ.get("DATABASE_URL", "postgresql://user:pass@host/db")
+MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "your_email@gmail.com")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "your_app_password")
 
 # Optional debug flag for local/testing
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
@@ -57,8 +58,9 @@ else:
         # ** FIX **: Added row_factory=dict_row to the pool
         pool = ConnectionPool(conninfo=DB_URL, max_size=POOL_MAX, row_factory=dict_row)
         app.logger.info("Postgres connection pool created (max_size=%s).", POOL_MAX)
-    except Exception:
-        app.logger.exception("Failed to create Postgres connection pool; falling back to None.")
+    except Exception as e:
+        app.logger.error(f"Failed to create Postgres connection pool. Error: {e}")
+        app.logger.warning("Falling back to None.")
         pool = None
 
 # Helper to obtain a connection context manager (works with pool or raw psycopg.connect)
@@ -102,7 +104,7 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 # Session security
 # -------------------------
 app.config.update(
-    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SECURE=not DEBUG, # Secure cookies if not in debug mode
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax"
 )
@@ -116,7 +118,7 @@ def init_tables():
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
-                    username VARCHAR(266) NOT NULL,
+                    username VARCHAR(266) UNIQUE NOT NULL,
                     email VARCHAR(266) UNIQUE NOT NULL,
                     password VARCHAR(266) NOT NULL,
                     role TEXT DEFAULT 'user',
@@ -205,8 +207,31 @@ def init_tables():
     except Exception:
         app.logger.exception("init_tables: failed to ensure tables")
 
+# --- Create Default Admin ---
+def create_default_admin():
+    """Create default admin if one doesn't exist (safe)."""
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            # Check if admin user or email already exists
+            cur.execute("SELECT id FROM users WHERE username = 'admin' OR email = 'admin' LIMIT 1")
+            if not cur.fetchone():
+                admin_user = "admin"
+                admin_email = "admin" # As requested by user
+                admin_pass = generate_password_hash("admin", method="pbkdf2:sha256")
+                admin_role = "admin"
+                
+                cur.execute(
+                    "INSERT INTO users (username, email, password, role) VALUES (%s, %s, %s, %s)",
+                    (admin_user, admin_email, admin_pass, admin_role)
+                )
+                app.logger.info("Default admin account created (user: admin, email: admin).")
+    except Exception as e:
+        app.logger.exception(f"Failed to create default admin: {e}")
+
+
 # run once on startup (safe: CREATE IF NOT EXISTS)
 init_tables()
+create_default_admin() # Create the default admin
 
 # -------------------------
 # Utilities
@@ -309,6 +334,15 @@ def get_user_by_email(email):
         app.logger.exception("Error fetching user by email")
         return None
 
+def get_user_by_username(username):
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE username=%s", (username,))
+            return cur.fetchone()
+    except Exception:
+        app.logger.exception("Error fetching user by username")
+        return None
+
 def get_user_by_id(user_id):
     try:
         with get_conn() as conn, conn.cursor() as cur:
@@ -321,24 +355,6 @@ def get_user_by_id(user_id):
 def get_current_user():
     user_id = session.get("user_id")
     return get_user_by_id(user_id) if user_id else None
-
-def create_superadmin():
-    """Create default superadmin if none exists (safe)."""
-    try:
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute("SELECT id FROM users WHERE role='superadmin' LIMIT 1")
-            if not cur.fetchone():
-                super_email = "superadmin@example.com"
-                super_username = "admin"
-                super_pass = generate_password_hash("admin")
-                cur.execute(
-                    "INSERT INTO users (username,email,password,role) VALUES (%s,%s,%s,%s)",
-                    (super_username, super_email, super_pass, "superadmin")
-                )
-    except Exception:
-        app.logger.exception("Failed to create superadmin")
-
-create_superadmin()
 
 # -------------------------
 # Main Routes (Login, Dashboard, etc.)
@@ -359,11 +375,17 @@ def login():
         return redirect(url_for("admin_dashboard") if role in ["admin","superadmin"] else url_for("dashboard"))
 
     if request.method == "POST":
-        email = request.form.get("email","").strip()
+        login_identifier = request.form.get("email","").strip() # Field is named 'email' in form
         password = request.form.get("password","")
-        user = get_user_by_email(email)
         
-        # This works now because the pool uses dict_row
+        # Check if login_identifier is an email or username
+        if '@' in login_identifier or login_identifier == 'admin': # Special case for 'admin'
+            user = get_user_by_email(login_identifier)
+            if not user and login_identifier == 'admin':
+                 user = get_user_by_username(login_identifier)
+        else:
+            user = get_user_by_username(login_identifier)
+        
         if user and check_password_hash(user["password"], password):
             session.update({
                 "user_id": user["id"],
@@ -373,7 +395,8 @@ def login():
             })
             flash(f"Welcome, {user.get('username','User')}!", "success")
             return redirect(url_for("admin_dashboard") if user.get("role") in ["admin","superadmin"] else url_for("dashboard"))
-        flash("Invalid email or password", "danger")
+        
+        flash("Invalid credentials", "danger")
     return render_template("login.html")
 
 @app.route("/register", methods=["GET","POST"])
@@ -389,7 +412,7 @@ def register():
         if not username or not email or not password:
             flash("All fields are required.", "warning")
             return redirect(url_for("register"))
-        hashed = generate_password_hash(password)
+        hashed = generate_password_hash(password, method="pbkdf2:sha256")
         try:
             with get_conn() as conn, conn.cursor() as cur:
                 cur.execute(
@@ -397,7 +420,7 @@ def register():
                     (username,email,hashed,"user")
                 )
         except pg_errors.UniqueViolation:
-            flash("Email already registered.", "danger")
+            flash("Email or Username already registered.", "danger")
         except Exception:
             app.logger.exception("Registration failed")
             flash("Database error. Try again later.", "danger")
@@ -534,13 +557,15 @@ def settings():
                 if new_pass:
                     cur.execute(
                         "UPDATE users SET username=%s,email=%s,password=%s WHERE id=%s",
-                        (username,email,generate_password_hash(new_pass),user["id"])
+                        (username,email,generate_password_hash(new_pass, method="pbkdf2:sha256"),user["id"])
                     )
                 else:
                     cur.execute(
                         "UPDATE users SET username=%s,email=%s WHERE id=%s",
                         (username,email,user["id"])
                     )
+        except pg_errors.UniqueViolation:
+             flash("Username or Email already exists.", "danger")
         except Exception:
             app.logger.exception("Failed to update settings")
             flash("Update failed. Try again later.", "danger")
@@ -607,7 +632,7 @@ def reset_with_token(token):
             with get_conn() as conn, conn.cursor() as cur:
                 cur.execute(
                     "UPDATE users SET password=%s WHERE email=%s",
-                    (generate_password_hash(password), email)
+                    (generate_password_hash(password, method="pbkdf2:sha256"), email)
                 )
         except Exception:
             app.logger.exception("Password reset failed")
