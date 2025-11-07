@@ -1,4 +1,4 @@
-# app.py - rewritten, preserves your routes and design, fixes DB connection issues
+# app.py - full rewrite (uses env vars for superadmin)
 import os
 import logging
 import datetime
@@ -198,31 +198,47 @@ def init_tables():
 init_tables()
 
 # -------------------------
-# Create superadmin account (if missing)
+# Create superadmin account (if missing) using environment variables
 # -------------------------
-def create_superadmin():
+def create_superadmin_from_env():
     """
-    Create a known superadmin account if none exists.
-    Per your request: email=admin123@gmail.com password=admin123
-    (password is stored hashed)
+    Create a superadmin account using environment variables:
+      SUPER_ADMIN_USER, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASS
+
+    If any env var is missing this will fall back to sensible defaults:
+      user: superadmin
+      email: chickenmonitoringsystem@gmail.com
+      pass: admin123
     """
+    admin_user = os.environ.get("SUPER_ADMIN_USER", "superadmin")
+    admin_email = os.environ.get("SUPER_ADMIN_EMAIL", "chickenmonitoringsystem@gmail.com")
+    admin_pass_raw = os.environ.get("SUPER_ADMIN_PASS", "admin123")
+
+    # Basic validation to avoid empty strings
+    if not admin_user:
+        admin_user = "superadmin"
+    if not admin_email:
+        admin_email = "chickenmonitoringsystem@gmail.com"
+    if not admin_pass_raw:
+        admin_pass_raw = "admin123"
+
     try:
         with get_conn() as conn, conn.cursor() as cur:
-            # If any superadmin exists, skip
-            cur.execute("SELECT id FROM users WHERE role='superadmin' OR email=%s LIMIT 1", ("admin123@gmail.com",))
+            # If a superadmin with that email or role exists, skip
+            cur.execute("SELECT id FROM users WHERE role='superadmin' OR email=%s LIMIT 1", (admin_email,))
             if cur.fetchone():
-                logger.info("Superadmin already exists or admin123@gmail.com present.")
+                logger.info("Superadmin already exists or email %s is present; skipping creation.", admin_email)
                 return
-            hashed = generate_password_hash("admin123", method="pbkdf2:sha256")
+            hashed = generate_password_hash(admin_pass_raw, method="pbkdf2:sha256")
             cur.execute(
                 "INSERT INTO users (username, email, password, role) VALUES (%s, %s, %s, %s)",
-                ("superadmin", "admin123@gmail.com", hashed, "superadmin")
+                (admin_user, admin_email, hashed, "superadmin")
             )
-            logger.info("Created superadmin: admin123@gmail.com (password 'admin123')")
+            logger.info("Created superadmin: %s (email: %s).", admin_user, admin_email)
     except Exception:
-        logger.exception("create_superadmin: failed")
+        logger.exception("create_superadmin_from_env: failed to create superadmin")
 
-create_superadmin()
+create_superadmin_from_env()
 
 # -------------------------
 # Utilities
@@ -372,7 +388,7 @@ def login():
         password = request.form.get("password", "")
         user = None
 
-        # If identifier contains @ treat as email, else username; allow 'admin123@gmail.com' or 'superadmin' etc.
+        # If identifier contains @ treat as email, else username; allow 'superadmin' or email
         if "@" in login_identifier:
             user = get_user_by_email(login_identifier)
         else:
