@@ -506,11 +506,11 @@ def admin_dashboard():
         app.logger.exception("admin_dashboard: error")
 
     return render_template("admin-dashboard.html",
-                            active_users=active_users,
-                            reports_count=reports_count,
-                            active_farms=active_farms,
-                            alerts_count=alerts_count,
-                            recent_activities=recent_activities)
+                               active_users=active_users,
+                               reports_count=reports_count,
+                               active_farms=active_farms,
+                               alerts_count=alerts_count,
+                               recent_activities=recent_activities)
 
 @app.route("/profile")
 @login_required
@@ -804,7 +804,7 @@ def fetch_all_data7():
     except Exception as e:
         app.logger.exception("Error in /get_all_data7")
         return jsonify({'error': str(e)}), 500
-
+        
 # -----------------------------------------------
 # <-- ⭐️ FIX: Added missing route for growth.html image gallery
 # -----------------------------------------------
@@ -833,9 +833,85 @@ def get_image_list():
     except Exception as e:
         app.logger.exception("Error in /get_image_list")
         return jsonify({'error': str(e)}), 500
+        
+# -----------------------------------------------
+# <-- ⭐️ FIX: Added missing STOP routes
+# -----------------------------------------------
 
-# -------------------------
-# Run App
-# -------------------------
+@app.route("/stop_water_relay", methods=["POST"])
+@login_required
+def stop_water_relay():
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO sensordata1 (datetime, food, water) VALUES (%s, %s, %s)",
+                (datetime.datetime.now(), 'OFF', 'OFF') # Assumes pressing stop turns both off
+            )
+        return jsonify({"success": "Water relay stopped"}), 200
+    except (Exception, psycopg.Error) as e:
+        app.logger.exception("Error in /stop_water_relay")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/stop_servo_food", methods=["POST"])
+@login_required
+def stop_servo_food():
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO sensordata1 (datetime, food, water) VALUES (%s, %s, %s)",
+                (datetime.datetime.now(), 'OFF', 'OFF') # Assumes pressing stop turns both off
+            )
+        return jsonify({"success": "Servo food stopped"}), 200
+    except (Exception, psycopg.Error) as e:
+        app.logger.exception("Error in /stop_servo_food")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/stop_conveyor", methods=["POST"])
+@login_required
+def stop_conveyor():
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)",
+                (datetime.datetime.now(), 'OFF', 'OFF', 'OFF') # Assumes stop turns all off
+            )
+        return jsonify({"success": "Conveyor stopped"}), 200
+    except (Exception, psycopg.Error) as e:
+        app.logger.exception("Error in /stop_conveyor")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/stop_sprinkle", methods=["POST"])
+@login_required
+def stop_sprinkle():
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)",
+                (datetime.datetime.now(), 'OFF', 'OFF', 'OFF') # Assumes stop turns all off
+            )
+        return jsonify({"success": "Sprinkle stopped"}), 200
+    except (Exception, psycopg.Error) as e:
+        app.logger.exception("Error in /stop_sprinkle")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/stop_uvlight", methods=["POST"])
+@login_required
+def stop_uvlight():
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)",
+                (datetime.datetime.now(), 'OFF', 'OFF', 'OFF') # Assumes stop turns all off
+            )
+        return jsonify({"success": "UV light stopped"}), 200
+    except (Exception, psycopg.Error) as e:
+        app.logger.exception("Error in /stop_uvlight")
+        return jsonify({"error": str(e)}), 500
+
+
+# ------------------------
+# Main
+# ------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=DEBUG)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(debug=DEBUG, host="0.0.0.0", port=port)
