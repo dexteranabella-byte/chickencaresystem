@@ -1,5 +1,5 @@
-import eventlet # <-- MUST be line 1
-eventlet.monkey_patch() # <-- MUST be line 2
+import eventlet # <-- FIX: Moved to line 1
+eventlet.monkey_patch() # <-- FIX: Moved to line 2
 
 # app.py (Upgraded with SocketIO, WTForms, and Eventlet)
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
@@ -30,7 +30,7 @@ logging.basicConfig(level=logging.INFO)
 # -------------------------
 # Required env vars (or defaults for local dev)
 # -------------------------
-# In a real app, load from .env or set in your environment
+# This line reads the DATABASE_URL you provided, from the server's environment
 app.secret_key = os.environ.get("SECRET_KEY", "a_very_insecure_default_secret_key_change_me")
 DB_URL_RAW = os.environ.get("DATABASE_URL", "postgresql://user:pass@host/db")
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "your_email@gmail.com")
