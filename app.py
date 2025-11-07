@@ -1,4 +1,4 @@
-# app.py - full rewrite (uses env vars for superadmin)
+# app.py - full rewrite (superadmin handled via environment fallback at login; no automatic DB insert)
 import os
 import logging
 import datetime
@@ -32,6 +32,11 @@ DB_URL_RAW = os.environ.get("DATABASE_URL", "postgresql://user:pass@localhost/db
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
+
+# Superadmin environment fallback (no DB insertion)
+SUPER_ADMIN_USER = os.environ.get("SUPER_ADMIN_USER", "superadmin")
+SUPER_ADMIN_EMAIL = os.environ.get("SUPER_ADMIN_EMAIL", "chickenmonitoringsystem@gmail.com")
+SUPER_ADMIN_PASS = os.environ.get("SUPER_ADMIN_PASS", "admin123")  # plaintext env used for fallback auth
 
 # ensure psycopg-friendly URL
 DB_URL = DB_URL_RAW.replace("postgres://", "postgresql://", 1) if DB_URL_RAW.startswith("postgres://") else DB_URL_RAW
@@ -197,48 +202,12 @@ def init_tables():
 
 init_tables()
 
-# -------------------------
-# Create superadmin account (if missing) using environment variables
-# -------------------------
-def create_superadmin_from_env():
-    """
-    Create a superadmin account using environment variables:
-      SUPER_ADMIN_USER, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASS
-
-    If any env var is missing this will fall back to sensible defaults:
-      user: superadmin
-      email: chickenmonitoringsystem@gmail.com
-      pass: admin123
-    """
-    admin_user = os.environ.get("SUPER_ADMIN_USER", "superadmin")
-    admin_email = os.environ.get("SUPER_ADMIN_EMAIL", "chickenmonitoringsystem@gmail.com")
-    admin_pass_raw = os.environ.get("SUPER_ADMIN_PASS", "admin123")
-
-    # Basic validation to avoid empty strings
-    if not admin_user:
-        admin_user = "superadmin"
-    if not admin_email:
-        admin_email = "chickenmonitoringsystem@gmail.com"
-    if not admin_pass_raw:
-        admin_pass_raw = "admin123"
-
-    try:
-        with get_conn() as conn, conn.cursor() as cur:
-            # If a superadmin with that email or role exists, skip
-            cur.execute("SELECT id FROM users WHERE role='superadmin' OR email=%s LIMIT 1", (admin_email,))
-            if cur.fetchone():
-                logger.info("Superadmin already exists or email %s is present; skipping creation.", admin_email)
-                return
-            hashed = generate_password_hash(admin_pass_raw, method="pbkdf2:sha256")
-            cur.execute(
-                "INSERT INTO users (username, email, password, role) VALUES (%s, %s, %s, %s)",
-                (admin_user, admin_email, hashed, "superadmin")
-            )
-            logger.info("Created superadmin: %s (email: %s).", admin_user, admin_email)
-    except Exception:
-        logger.exception("create_superadmin_from_env: failed to create superadmin")
-
-create_superadmin_from_env()
+# NOTE:
+# The previous versions attempted to auto-insert a superadmin row into the DB.
+# Per your request, that behavior has been removed. Instead:
+# - The environment variables SUPER_ADMIN_USER / SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASS
+#   are used as a fallback *during login* if no DB user exists with that identifier.
+# - This avoids modifying the database automatically and lets manage-users page handle role changes.
 
 # -------------------------
 # Utilities
@@ -379,6 +348,7 @@ def home():
 
 @app.route("/login", methods=["GET","POST"])
 def login():
+    # If already logged in -> redirect accordingly
     if "user_id" in session:
         role = session.get("user_role")
         return redirect(url_for("admin_dashboard") if role in ["admin","superadmin"] else url_for("dashboard"))
@@ -388,26 +358,47 @@ def login():
         password = request.form.get("password", "")
         user = None
 
-        # If identifier contains @ treat as email, else username; allow 'superadmin' or email
+        # Try DB lookup first (email or username)
         if "@" in login_identifier:
             user = get_user_by_email(login_identifier)
         else:
-            # try username
             user = get_user_by_username(login_identifier)
-            # fallback: allow using email without @ (rare)
             if not user:
+                # fallback: allow login by email-like without '@' (rare)
                 user = get_user_by_email(login_identifier)
 
-        if user and check_password_hash(user["password"], password):
-            session.update({
-                "user_id": user["id"],
-                "user_role": user.get("role", "user"),
-                "user_username": user.get("username"),
-                "user_email": user.get("email")
-            })
-            flash(f"Welcome, {user.get('username','User')}!", "success")
-            return redirect(url_for("admin_dashboard") if user.get("role") in ["admin","superadmin"] else url_for("dashboard"))
-        flash("Invalid email/username or password", "danger")
+        # If a DB user exists - use hashed password verification
+        if user:
+            try:
+                if check_password_hash(user["password"], password):
+                    session.update({
+                        "user_id": user["id"],
+                        "user_role": user.get("role", "user"),
+                        "user_username": user.get("username"),
+                        "user_email": user.get("email")
+                    })
+                    flash(f"Welcome, {user.get('username','User')}!", "success")
+                    return redirect(url_for("admin_dashboard") if user.get("role") in ["admin","superadmin"] else url_for("dashboard"))
+                else:
+                    flash("Invalid email/username or password", "danger")
+            except Exception:
+                logger.exception("Password check failed for DB user")
+                flash("Login failed. Try again.", "danger")
+        else:
+            # No DB user found. Check if identifier matches configured superadmin fallback
+            matches_super_user = (login_identifier == SUPER_ADMIN_USER) or (login_identifier == SUPER_ADMIN_EMAIL)
+            if matches_super_user and password == SUPER_ADMIN_PASS:
+                # Create a transient session for superadmin (no DB insertion)
+                session.update({
+                    "user_id": None,  # no DB id
+                    "user_role": "superadmin",
+                    "user_username": SUPER_ADMIN_USER,
+                    "user_email": SUPER_ADMIN_EMAIL
+                })
+                flash(f"Welcome, {SUPER_ADMIN_USER} (superadmin)!", "success")
+                return redirect(url_for("admin_dashboard"))
+            else:
+                flash("Invalid email/username or password", "danger")
 
     return render_template("login.html")
 
