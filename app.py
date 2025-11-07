@@ -1,5 +1,5 @@
-import eventlet # <-- FIX: Moved to line 1
-eventlet.monkey_patch() # <-- FIX: Moved to line 2
+import eventlet # <-- MUST be line 1
+eventlet.monkey_patch() # <-- MUST be line 2
 
 # app.py (Upgraded with SocketIO, WTForms, and Eventlet)
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
