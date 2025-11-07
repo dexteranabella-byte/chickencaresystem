@@ -1,3 +1,6 @@
+import eventlet # <-- FIX: Moved to line 1
+eventlet.monkey_patch() # <-- FIX: Moved to line 2
+
 # app.py (Upgraded with SocketIO, WTForms, and Eventlet)
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mail import Mail, Message
@@ -7,8 +10,6 @@ from functools import wraps
 import os
 import logging
 import datetime
-import eventlet # Required for SocketIO async_mode
-eventlet.monkey_patch() # Patch standard libraries for eventlet
 
 import psycopg
 from psycopg.rows import dict_row
