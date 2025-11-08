@@ -108,13 +108,13 @@
   <!-- FORGOT PASSWORD FORM -->
   <div id="forgotForm" class="form-container hidden">
     <h1>Reset Password</h1>
-  A <p class="info-text">Enter your email to receive a password reset link.</p>
+    <p class="info-text">Enter your email to receive a password reset link.</p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
           <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
-s       {% endfor %}
+        {% endfor %}
       {% endif %}
     {% endwith %}
 
@@ -148,7 +148,7 @@ s       {% endfor %}
     forgotForm.classList.remove('hidden');
   });
 
-D   document.getElementById('showLogin').addEventListener('click', e => {
+D document.getElementById('showLogin').addEventListener('click', e => {
     e.preventDefault();
     forgotForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
@@ -156,10 +156,10 @@ D   document.getElementById('showLogin').addEventListener('click', e => {
 
   // Auto-show forgot form if redirected from reset route
   window.onload = () => {
-s   if(window.location.pathname.includes('reset')) {
+    if(window.location.pathname.includes('reset')) {
       loginForm.classList.add('hidden');
       forgotForm.classList.remove('hidden');
-    }
+S }
   };
 </script>
 
