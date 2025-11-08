@@ -23,7 +23,7 @@
       align-items: center;
       min-height: 100vh;
       /* --- CONNECTION FIX: Hard-coded URL changed to url_for() --- */
-D     background: url({{ url_for('static', filename='imgs/bg.jpg') }}) no-repeat;
+      background: url({{ url_for('static', filename='imgs/bg.jpg') }}) no-repeat;
       background-size: cover;
       background-position: center;
     }
@@ -67,7 +67,7 @@ D     background: url({{ url_for('static', filename='imgs/bg.jpg') }}) no-repe
       top: 30%;
       transform: translate(-50%);
       font-size: 20px;
-ci   }
+    }
     .wrapper .remember-forgot {
       display: flex;
       justify-content: space-between;
@@ -101,7 +101,7 @@ ci   }
     .wrapper .register-link {
       font-size: 14.5px;
       text-align: center;
-  _     margin: 20px 0 15px;
+      margin: 20px 0 15px;
     }
     .register-link p a {
       color: #fff;
@@ -131,7 +131,7 @@ ci   }
   	.flash-success { background-color: #10b981; border: 1px solid #047857; }
   	.flash-danger { background-color: #ef4444; border: 1px solid #b91c1c; }
   	.flash-warning { background-color: #f59e0b; border: 1px solid #d97706; }
-Si  .flash-info { background-color: #3b82f6; border: 1px solid #1e40af; }
+    .flash-info { background-color: #3b82f6; border: 1px solid #1e40af; }
     
   </style>
 </head>
@@ -144,19 +144,18 @@ Si  .flash-info { background-color: #3b82f6; border: 1px solid #1e40af; }
       {% if messages %}
         {% for category, message in messages %}
           <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
-ci       {% endfor %}
+        {% endfor %}
       {% endif %}
     {% endwith %}
 
   	<form method="post" action="{{ url_for('login') }}">
       <div class="input-box">
       	<!-- --- CONNECTION FIX: Changed name="username" to name="email" --- -->
-      	<!-- Your app.py expects "email" but will check it against username OR email -->
+all     	<!-- Your app.py expects "email" but will check it against username OR email -->
       	<input type="text" name="email" placeholder="Email or Username" required>
       	<i class='bx bxs-user'></i>
       </div>
       <div class="input-box">
-Indentation fixed
       	<input type="password" name="password" placeholder="Password" required>
       	<i class='bx bxs-lock-alt' ></i>
       </div>
@@ -169,10 +168,10 @@ Indentation fixed
   	</div>
 
     	<button type="submit" class="btn">Login</button>
-      
+    s   
     	<div class="register-link">
       	<!-- --- CONNECTION FIX: Hard-coded link changed to url_for() --- -->
-ci     <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+      	<p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
     	</div>
   	</form>
   </div>
