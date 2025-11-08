@@ -1,6 +1,9 @@
 import eventlet # <-- FIX: MUST be line 1
 eventlet.monkey_patch() # <-- FIX: MUST be line 2
 
+from dotenv import load_dotenv # <-- NEW: Added for python-dotenv
+load_dotenv() # <-- NEW: Loads .env file for local development
+
 # app.py (Upgraded with SocketIO, WTForms, and Eventlet)
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mail import Mail, Message
