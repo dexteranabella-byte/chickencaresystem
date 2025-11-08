@@ -27,16 +27,18 @@ logging.basicConfig(level=logging.INFO)
 logger = app.logger
 
 # Environment / secrets (use real env in production)
+# You can set these in Render / your environment:
+# SUPER_ADMIN_USER, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASS
 app.secret_key = os.environ.get("SECRET_KEY", "change_me_for_prod")
 DB_URL_RAW = os.environ.get("DATABASE_URL", "postgresql://user:pass@localhost/db")
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
-# Superadmin environment fallback (no DB insertion)
-SUPER_ADMIN_USER = os.environ.get("SUPER_ADMIN_USER", "superadmin")
+# Superadmin fallback (used only for auth if DB user not found)
+SUPER_ADMIN_USER = os.environ.get("SUPER_ADMIN_USER", "admin")
 SUPER_ADMIN_EMAIL = os.environ.get("SUPER_ADMIN_EMAIL", "chickenmonitoringsystem@gmail.com")
-SUPER_ADMIN_PASS = os.environ.get("SUPER_ADMIN_PASS", "admin123")  # plaintext env used for fallback auth
+SUPER_ADMIN_PASS = os.environ.get("SUPER_ADMIN_PASS", "chicken123")  # plaintext env fallback
 
 # ensure psycopg-friendly URL
 DB_URL = DB_URL_RAW.replace("postgres://", "postgresql://", 1) if DB_URL_RAW.startswith("postgres://") else DB_URL_RAW
@@ -85,9 +87,7 @@ def get_conn():
             ...
     """
     if pool:
-        # pool.connection() returns a context manager
         return pool.connection()
-    # fallback context manager that yields a new connection
     class _DirectConnCtx:
         def __enter__(self):
             self.conn = psycopg.connect(DB_URL, row_factory=dict_row)
@@ -196,18 +196,11 @@ def init_tables():
                     DateTime TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
                 )
             """)
-        logger.info("init_tables: ensured fallback tables exist.")
+        logger.info("init_tables: ensured tables exist.")
     except Exception:
         logger.exception("init_tables: failed to ensure tables")
 
 init_tables()
-
-# NOTE:
-# The previous versions attempted to auto-insert a superadmin row into the DB.
-# Per your request, that behavior has been removed. Instead:
-# - The environment variables SUPER_ADMIN_USER / SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASS
-#   are used as a fallback *during login* if no DB user exists with that identifier.
-# - This avoids modifying the database automatically and lets manage-users page handle role changes.
 
 # -------------------------
 # Utilities
@@ -282,7 +275,7 @@ def format_datetime_in_results(results, field_name="datetime"):
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if "user_id" not in session:
+        if "user_id" not in session and session.get("user_role") not in ("admin", "superadmin", "user"):
             flash("Please log in first.", "warning")
             return redirect(url_for("login"))
         return f(*args, **kwargs)
@@ -332,7 +325,12 @@ def get_user_by_id(user_id):
 
 def get_current_user():
     uid = session.get("user_id")
-    return get_user_by_id(uid) if uid else None
+    if uid:
+        return get_user_by_id(uid)
+    # If superadmin session (transient), return a minimal dict
+    if session.get("user_role") == "superadmin":
+        return {"username": session.get("user_username"), "email": session.get("user_email"), "role": "superadmin"}
+    return None
 
 # -------------------------
 # Routes - pages & auth
@@ -348,8 +346,8 @@ def home():
 
 @app.route("/login", methods=["GET","POST"])
 def login():
-    # If already logged in -> redirect accordingly
-    if "user_id" in session:
+    # Already logged in -> redirect accordingly
+    if "user_id" in session or session.get("user_role") in ("admin", "superadmin", "user"):
         role = session.get("user_role")
         return redirect(url_for("admin_dashboard") if role in ["admin","superadmin"] else url_for("dashboard"))
 
@@ -358,16 +356,14 @@ def login():
         password = request.form.get("password", "")
         user = None
 
-        # Try DB lookup first (email or username)
+        # DB lookup (email or username)
         if "@" in login_identifier:
             user = get_user_by_email(login_identifier)
         else:
             user = get_user_by_username(login_identifier)
             if not user:
-                # fallback: allow login by email-like without '@' (rare)
                 user = get_user_by_email(login_identifier)
 
-        # If a DB user exists - use hashed password verification
         if user:
             try:
                 if check_password_hash(user["password"], password):
@@ -385,12 +381,11 @@ def login():
                 logger.exception("Password check failed for DB user")
                 flash("Login failed. Try again.", "danger")
         else:
-            # No DB user found. Check if identifier matches configured superadmin fallback
+            # No DB user — check superadmin fallback (transient, no DB insert)
             matches_super_user = (login_identifier == SUPER_ADMIN_USER) or (login_identifier == SUPER_ADMIN_EMAIL)
             if matches_super_user and password == SUPER_ADMIN_PASS:
-                # Create a transient session for superadmin (no DB insertion)
                 session.update({
-                    "user_id": None,  # no DB id
+                    "user_id": None,  # transient, not stored in DB
                     "user_role": "superadmin",
                     "user_username": SUPER_ADMIN_USER,
                     "user_email": SUPER_ADMIN_EMAIL
@@ -404,7 +399,7 @@ def login():
 
 @app.route("/register", methods=["GET","POST"])
 def register():
-    if "user_id" in session:
+    if "user_id" in session or session.get("user_role") in ("admin","superadmin","user"):
         role = session.get("user_role")
         return redirect(url_for("admin_dashboard") if role in ["admin","superadmin"] else url_for("dashboard"))
 
@@ -535,6 +530,11 @@ def settings():
             flash("Username and email cannot be empty.", "warning")
             return redirect(url_for("settings"))
         try:
+            # Superadmin (transient) cannot update DB via settings; require DB account for changes
+            if session.get("user_role") == "superadmin" and session.get("user_id") is None:
+                flash("Superadmin identity is from environment and cannot be updated here. Use manage-users to modify DB accounts.", "warning")
+                return redirect(url_for("settings"))
+
             with get_conn() as conn, conn.cursor() as cur:
                 if new_pass:
                     cur.execute("UPDATE users SET username=%s,email=%s,password=%s WHERE id=%s",
@@ -580,6 +580,7 @@ def generate():
                 logger.exception("Failed to send reset email")
                 flash("Failed to send reset email. Try again later.", "danger")
         else:
+            # Do not allow password reset for the transient env superadmin here
             flash("Email not found.", "warning")
     return render_template("generate.html")
 
@@ -610,6 +611,9 @@ def reset_with_token(token):
             flash("Could not reset password. Try again later.", "danger")
     return render_template("reset_password.html", token=token)
 
+# -------------------------
+# Remaining app routes & APIs (kept as-is)
+# -------------------------
 @app.route("/growth-monitoring")
 @app.route("/webcam")
 @login_required
@@ -669,9 +673,7 @@ def sanitization():
 def report():
     return render_template("report.html")
 
-# -------------------------
-# Data API routes (aliases kept)
-# -------------------------
+# Data API routes (kept)
 @app.route('/get_all_data1')
 @app.route('/get_growth_data')
 def fetch_all_data1():
