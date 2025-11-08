@@ -22,7 +22,7 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      /* --- CONNECTION FIX: Hard-coded URL changed to url_for() --- */
+      /* --- CONNECTION FIX: Hard-coded URL changed to url_for() --- */
       background: url({{ url_for('static', filename='imgs/bg.jpg') }}) no-repeat;
       background-size: cover;
       background-position: center;
@@ -116,18 +116,18 @@
       font-size: 13px;
       line-height: 1.5;
       color: #999999;
-s   }
+    }
 
-    /* --- CONNECTION FIX: Added styles for flash messages --- */
+    /* --- CONNECTION FIX: Added styles for flash messages --- */
     .flash-message { 
-      padding: 10px; 
-      margin-bottom: 20px; 
-      border-radius: 5px; 
-      font-size: 14px; 
-      font-weight: 500; 
-      color: #fff; 
-      text-align: center;
-    }
+      padding: 10px; 
+      margin-bottom: 20px; 
+      border-radius: 5px; 
+      font-size: 14px; 
+      font-weight: 500; 
+      color: #fff; 
+      text-align: center;
+    }
     .flash-success { background-color: #10b981; border: 1px solid #047857; }
     .flash-danger { background-color: #ef4444; border: 1px solid #b91c1c; }
     .flash-warning { background-color: #f59e0b; border: 1px solid #d97706; }
@@ -139,7 +139,7 @@ s   }
   <div class="wrapper">
     <h1>Login</h1>
 
-    <!-- --- CONNECTION FIX: Added flash message block --- -->
+    <!-- --- CONNECTION FIX: Added flash message block --- -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -150,8 +150,8 @@ s   }
 
     <form method="post" action="{{ url_for('login') }}">
       <div class="input-box">
-        <!-- --- CONNECTION FIX: Changed name="username" to name="email" --- -->
-        <!-- Your app.py expects "email" but will check it against username OR email -->
+        <!-- --- CONNECTION FIX: Changed name="username" to name="email" --- -->
+        <!-- Your app.py expects "email" but will check it against username OR email -->
         <input type="text" name="email" placeholder="Email or Username" required>
         <i class='bx bxs-user'></i>
       </div>
@@ -160,17 +160,17 @@ s   }
         <i class='bx bxs-lock-alt' ></i>
       </div>
 
-      <!-- --- CONNECTION FIX: Added "Remember Me" and "Forgot Password" --- -->
+      <!-- --- CONNECTION FIX: Added "Remember Me" and "Forgot Password" --- -->
       <div class="remember-forgot">
         <label><input type="checkbox" name="remember"> Remember me</label>
-        <!-- This now links to your forgot_password route -->
+        <!-- This now links to your forgot_password route -->
         <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
       </div>
 
       <button type="submit" class="btn">Login</button>
       
       <div class="register-link">
-        <!-- --- CONNECTION FIX: Hard-coded link changed to url_for() --- -->
+        <!-- --- CONNECTION FIX: Hard-coded link changed to url_for() --- -->
         <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
       </div>
     </form>
