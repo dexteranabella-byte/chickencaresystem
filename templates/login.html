@@ -11,7 +11,7 @@
 
   <style>
     /* ====================== Login Form Design ========================== */
-    * {
+  	* {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
@@ -111,15 +111,15 @@
     .register-link p a:hover {
       text-decoration: underline;
     }
-    .txt1 {
+  	.txt1 {
       font-family: Poppins-Regular;
       font-size: 13px;
       line-height: 1.5;
       color: #999999;
-    }
+	}
 
-    /* --- CONNECTION FIX: Added styles for flash messages --- */
-    .flash-message { 
+  	/* --- CONNECTION FIX: Added styles for flash messages --- */
+  	.flash-message { 
       padding: 10px; 
       margin-bottom: 20px; 
       border-radius: 5px; 
@@ -127,11 +127,11 @@
       font-weight: 500; 
       color: #fff; 
       text-align: center;
-    }
-    .flash-success { background-color: #10b981; border: 1px solid #047857; }
-    .flash-danger { background-color: #ef4444; border: 1px solid #b91c1c; }
-    .flash-warning { background-color: #f59e0b; border: 1px solid #d97706; }
-    .flash-info { background-color: #3b82f6; border: 1px solid #1e40af; }
+  	}
+  	.flash-success { background-color: #10b981; border: 1px solid #047857; }
+  	.flash-danger { background-color: #ef4444; border: 1px solid #b91c1c; }
+  	.flash-warning { background-color: #f59e0b; border: 1px solid #d97706; }
+  	.flash-info { background-color: #3b82f6; border: 1px solid #1e40af; }
     
   </style>
 </head>
@@ -140,7 +140,7 @@
     <h1>Login</h1>
 
     <!-- --- CONNECTION FIX: Added flash message block --- -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
+  	{% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
           <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
@@ -148,32 +148,32 @@
       {% endif %}
     {% endwith %}
 
-    <form method="post" action="{{ url_for('login') }}">
+  	<form method="post" action="{{ url_for('login') }}">
       <div class="input-box">
-        <!-- --- CONNECTION FIX: Changed name="username" to name="email" --- -->
-        <!-- Your app.py expects "email" but will check it against username OR email -->
-        <input type="text" name="email" placeholder="Email or Username" required>
-        <i class='bx bxs-user'></i>
+      	<!-- --- CONNECTION FIX: Changed name="username" to name="email" --- -->
+      	<!-- Your app.py expects "email" but will check it against username OR email -->
+      	<input type="text" name="email" placeholder="Email or Username" required>
+      	<i class='bx bxs-user'></i>
       </div>
       <div class="input-box">
-        <input type="password" name="password" placeholder="Password" required>
-        <i class='bx bxs-lock-alt' ></i>
+      	<input type="password" name="password" placeholder="Password" required>
+      	<i class='bx bxs-lock-alt' ></i>
       </div>
 
-      <!-- --- CONNECTION FIX: Added "Remember Me" and "Forgot Password" --- -->
-      <div class="remember-forgot">
-        <label><input type="checkbox" name="remember"> Remember me</label>
-        <!-- This now links to your forgot_password route -->
-        <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
-      </div>
+    	<!-- --- CONNECTION FIX: Added "Remember Me" and "Forgot Password" --- -->
+    	<div class="remember-forgot">
+      	<label><input type="checkbox" name="remember"> Remember me</label>
+      	<!-- This now links to your forgot_password route -->
+      	<a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+  	</div>
 
-      <button type="submit" class="btn">Login</button>
+    	<button type="submit" class="btn">Login</button>
       
-      <div class="register-link">
-        <!-- --- CONNECTION FIX: Hard-coded link changed to url_for() --- -->
-        <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
-      </div>
-    </form>
+    	<div class="register-link">
+      	<!-- --- CONNECTION FIX: Hard-coded link changed to url_for() --- -->
+      	<p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+    	</div>
+  	</form>
   </div>
 </body>
 </html>
