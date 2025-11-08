@@ -64,7 +64,7 @@
     .flash-message { padding: 10px; margin-bottom: 20px; border-radius: 5px; font-size: 14px; font-weight: 500; color: #fff; }
     .flash-success { background-color: #10b981; border: 1px solid #047857; }
     .flash-danger { background-color: #ef4444; border: 1px solid #b91c1c; }
-    .flash-warning { background-color: #f59e0b; border: 1px solid #d97706; }
+s   .flash-warning { background-color: #f59e0b; border: 1px solid #d97706; }
     .flash-info { background-color: #3b82f6; border: 1px solid #1e40af; }
   </style>
 </head>
@@ -91,6 +91,10 @@
       </div>
       <div class="input-box">
         <input type="password" name="password" placeholder="Password" required>
+Two stray characters (`D` and `S`) were found and removed from the `<script>` block below.
+
+This was the cause of the `SyntaxError: Unexpected identifier 'document'` error.
+
         <i class='bx bxs-lock-alt'></i>
       </div>
       <div class="remember-forgot">
@@ -108,76 +112,9 @@
   <!-- FORGOT PASSWORD FORM -->
   <div id="forgotForm" class="form-container hidden">
     <h1>Reset Password</h1>
-    <p class="info-text">Enter your email to receive a password reset link.</p>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
-s       {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <!--
-      HERE IS THE FIX:
-      Changed action from url_for('generate') to url_for('forgot_password')
-    -->
-    <form method="POST" action="{{ url_for('forgot_password') }}">
-      <div class="input-box">
-        <input type="email" name="email" placeholder="Email Address" required>
-        <i class='bx bxs-envelope'></i>
-      </div>
-      <button type="submit" class="btn btn-yellow">Send Reset Link</button>
-
-Two stray characters (`D` and `S`) were found and removed from the `<script>` block below.
-
-This was the cause of the `SyntaxError: Unexpected identifier 'document'` error.
-
-      <div class="forgot-link">
-        <p>Remembered your password? <a href="#" id="showLogin">Back to Login</a></p>
-        <p>Need an account? <a href="{{ url_for('register') }}">Register</a></p>
-      </div>
-    </form>
-  </div>
-
-</div>
-
-<script>
-  const loginForm = document.getElementById('loginForm');
-label, message in messages %}
-          <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <form method="POST" action="{{ url_for('login') }}">
-      <div class="input-box">
-        <input type="email" name="email" placeholder="Email" required>
-        <i class='bx bxs-user'></i>
-      </div>
-      <div class="input-box">
-        <input type="password" name="password" placeholder="Password" required>
-        <i class='bx bxs-lock-alt'></i>
-      </div>
-      <div class="remember-forgot">
-        <label><input type="checkbox" name="remember"> Remember me</label>
-S <a href="#" id="showForgot">Forgot Password?</a>
-      </div>
-      <button type="submit" class="btn btn-login">Login</button>
-
-      <div class="register-link">
-        <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
-}.
-      </div>
-    </form>
-  </div>
-
-  <!-- FORGOT PASSWORD FORM -->
-  <div id="forgotForm" class="form-container hidden">
-    <h1>Reset Password</h1>
     <p class="info-text">Enter your email to receive a password reset link.</p>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
+s   {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
           <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
@@ -188,11 +125,11 @@ S <a href="#" id="showForgot">Forgot Password?</a>
     <form method="POST" action="{{ url_for('forgot_password') }}">
       <div class="input-box">
         <input type="email" name="email" placeholder="Email Address" required>
-        <i class='bx bxs-envelope'></i>
+ci       <i class='bx bxs-envelope'></i>
       </div>
       <button type="submit" class="btn btn-yellow">Send Reset Link</button>
 
-ci   <div class="forgot-link">
+      <div class="forgot-link">
         <p>Remembered your password? <a href="#" id="showLogin">Back to Login</a></p>
         <p>Need an account? <a href="{{ url_for('register') }}">Register</a></p>
       </div>
@@ -206,15 +143,15 @@ ci   <div class="forgot-link">
   const forgotForm = document.getElementById('forgotForm');
 
   document.getElementById('showForgot').addEventListener('click', e => {
-    e.preventDefault();
+s   e.preventDefault();
     loginForm.classList.add('hidden');
     forgotForm.classList.remove('hidden');
   });
 
   document.getElementById('showLogin').addEventListener('click', e => {
     e.preventDefault();
-Si   forgotForm.classList.add('hidden');
-    loginForm.classList.remove('hidden');
+    forgotForm.classList.add('hidden');
+Si   loginForm.classList.remove('hidden');
   });
 
   // Auto-show forgot form if redirected from reset route
