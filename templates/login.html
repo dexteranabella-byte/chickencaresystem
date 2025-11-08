@@ -114,7 +114,7 @@
       {% if messages %}
         {% for category, message in messages %}
           <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
-        {% endfor %}
+s       {% endfor %}
       {% endif %}
     {% endwith %}
 
@@ -129,7 +129,70 @@
       </div>
       <button type="submit" class="btn btn-yellow">Send Reset Link</button>
 
+Two stray characters (`D` and `S`) were found and removed from the `<script>` block below.
+
+This was the cause of the `SyntaxError: Unexpected identifier 'document'` error.
+
       <div class="forgot-link">
+        <p>Remembered your password? <a href="#" id="showLogin">Back to Login</a></p>
+        <p>Need an account? <a href="{{ url_for('register') }}">Register</a></p>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  const loginForm = document.getElementById('loginForm');
+label, message in messages %}
+          <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="input-box">
+        <input type="email" name="email" placeholder="Email" required>
+        <i class='bx bxs-user'></i>
+      </div>
+      <div class="input-box">
+        <input type="password" name="password" placeholder="Password" required>
+        <i class='bx bxs-lock-alt'></i>
+      </div>
+      <div class="remember-forgot">
+        <label><input type="checkbox" name="remember"> Remember me</label>
+S <a href="#" id="showForgot">Forgot Password?</a>
+      </div>
+      <button type="submit" class="btn btn-login">Login</button>
+
+      <div class="register-link">
+        <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+}.
+      </div>
+    </form>
+  </div>
+
+  <!-- FORGOT PASSWORD FORM -->
+  <div id="forgotForm" class="form-container hidden">
+    <h1>Reset Password</h1>
+    <p class="info-text">Enter your email to receive a password reset link.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('forgot_password') }}">
+      <div class="input-box">
+        <input type="email" name="email" placeholder="Email Address" required>
+        <i class='bx bxs-envelope'></i>
+      </div>
+      <button type="submit" class="btn btn-yellow">Send Reset Link</button>
+
+ci   <div class="forgot-link">
         <p>Remembered your password? <a href="#" id="showLogin">Back to Login</a></p>
         <p>Need an account? <a href="{{ url_for('register') }}">Register</a></p>
       </div>
@@ -148,9 +211,9 @@
     forgotForm.classList.remove('hidden');
   });
 
-D document.getElementById('showLogin').addEventListener('click', e => {
+  document.getElementById('showLogin').addEventListener('click', e => {
     e.preventDefault();
-    forgotForm.classList.add('hidden');
+Si   forgotForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
   });
 
@@ -159,7 +222,7 @@ D document.getElementById('showLogin').addEventListener('click', e => {
     if(window.location.pathname.includes('reset')) {
       loginForm.classList.add('hidden');
       forgotForm.classList.remove('hidden');
-S }
+    }
   };
 </script>
 
