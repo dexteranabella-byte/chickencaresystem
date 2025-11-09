@@ -1,179 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | ChickCare</title>
-  <!-- Boxicons -->
-  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-  <!-- Poppins Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | ChickCare</title>
 
-  <style>
-    /* ====================== Login Form Design ========================== */
-  	* {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Poppins", sans-serif;
-    }
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      /* --- CONNECTION FIX: Hard-coded URL changed to url_for() --- */
-      background: url({{ url_for('static', filename='imgs/bg.jpg') }}) no-repeat;
-      background-size: cover;
-      background-position: center;
-    }
-    .wrapper {
-      width: 420px;
-      background: transparent;
-      border: 2px solid rgba(255, 255, 255, .2);
-      backdrop-filter: blur(60px);
-      color: #fff;
-      border-radius: 12px;
-      padding: 30px 40px;
-    }
-    .wrapper h1 {
-      font-size: 36px;
-      text-align: center;
-    }
-    .wrapper .input-box {
-      position: relative;
-      width: 100%;
-      height: 50px;
-      margin: 30px 0;
-    }
-    .input-box input {
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      border: none;
-      outline: none;
-      border: 2px solid rgba(255, 255, 255, .2);
-      border-radius: 40px;
-      font-size: 16px;
-      color: #fff;
-      padding: 20px 45px 20px 20px;
-    }
-    .input-box input::placeholder {
-      color: #fff;
-    }
-    .input-box i {
-      position: absolute;
-      right: 20px;
-      top: 30%;
-      transform: translate(-50%);
-      font-size: 20px;
-    }
-    .wrapper .remember-forgot {
-      display: flex;
-      justify-content: space-between;
-      font-size: 14.5px;
-      margin: -15px 0 15px;
-    }
-    .remember-forgot label input {
-      accent-color: #fff;
-      margin-right: 3px;
-    }
-    .remember-forgot a {
-      color: #fff;
-      text-decoration: none;
-    }
-    .remember-forgot a:hover {
-      text-decoration: underline;
-    }
-    .wrapper .btn {
-      width: 100%;
-      height: 45px;
-      background: #fff;
-      border: none;
-      outline: none;
-      border-radius: 40px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, .1);
-      cursor: pointer;
-      font-size: 16px;
-      color: #333;
-      font-weight: 600;
-    }
-    .wrapper .register-link {
-      font-size: 14.5px;
-      text-align: center;
-      margin: 20px 0 15px;
-    }
-    .register-link p a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .register-link p a:hover {
-      text-decoration: underline;
-    }
-  	.txt1 {
-      font-family: Poppins-Regular;
-      font-size: 13px;
-      line-height: 1.5;
-      color: #999999;
-	}
+  <!-- Boxicons -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
-  	/* --- CONNECTION FIX: Added styles for flash messages --- */
-  	.flash-message { 
-      padding: 10px; 
-      margin-bottom: 20px; 
-      border-radius: 5px; 
-      font-size: 14px; 
-      font-weight: 500; 
-      color: #fff; 
-      text-align: center;
-  	}
-  	.flash-success { background-color: #10b981; border: 1px solid #047857; }
-  	.flash-danger { background-color: #ef4444; border: 1px solid #b91c1c; }
-  	.flash-warning { background-color: #f59e0b; border: 1px solid #d97706; }
-    .flash-info { background-color: #3b82f6; border: 1px solid #1e40af; }
-    
-  </style>
+  <!-- Google Font: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: url({{ url_for('static', filename='imgs/bg.jpg') }}) no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .wrapper {
+      width: 420px;
+      background: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(60px);
+      color: #fff;
+      border-radius: 12px;
+      padding: 30px 40px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.3);
+    }
+
+    .wrapper h1 {
+      font-size: 36px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .input-box {
+      position: relative;
+      width: 100%;
+      height: 50px;
+      margin: 25px 0;
+    }
+
+    .input-box input {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 40px;
+      font-size: 16px;
+      color: #fff;
+      padding: 20px 45px 20px 20px;
+      transition: border 0.3s;
+    }
+
+    .input-box input::placeholder {
+      color: #fff;
+    }
+
+    .input-box input:focus {
+      border: 2px solid #fff;
+    }
+
+    .input-box i {
+      position: absolute;
+      right: 20px;
+      top: 30%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      color: #fff;
+    }
+
+    .remember-forgot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      margin: -10px 0 20px;
+    }
+
+    .remember-forgot label input {
+      accent-color: #fff;
+      margin-right: 5px;
+    }
+
+    .remember-forgot a {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .remember-forgot a:hover {
+      text-decoration: underline;
+    }
+
+    .btn {
+      width: 100%;
+      height: 45px;
+      background: #fff;
+      border: none;
+      outline: none;
+      border-radius: 40px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      font-size: 16px;
+      color: #333;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #f1f1f1;
+      transform: scale(1.02);
+    }
+
+    .register-link {
+      font-size: 14px;
+      text-align: center;
+      margin: 20px 0 10px;
+    }
+
+    .register-link a {
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+
+    /* Flash Messages */
+    .flash-message {
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 15px;
+      text-align: center;
+      color: #fff;
+    }
+
+    .flash-success { background-color: #10b981; border: 1px solid #047857; }
+    .flash-danger { background-color: #ef4444; border: 1px solid #b91c1c; }
+    .flash-warning { background-color: #f59e0b; border: 1px solid #b45309; }
+    .flash-info { background-color: #3b82f6; border: 1px solid #1d4ed8; }
+  </style>
 </head>
 <body>
-  <div class="wrapper">
-    <h1>Login</h1>
+  <div class="wrapper">
+    <h1>Login</h1>
 
-    <!-- --- CONNECTION FIX: Added flash message block --- -->
-  	{% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-  	<form method="post" action="{{ url_for('login') }}">
-      <div class="input-box">
-      	<!-- --- CONNECTION FIX: Changed name="username" to name="email" --- -->
-all     	<!-- Your app.py expects "email" but will check it against username OR email -->
-      	<input type="text" name="email" placeholder="Email or Username" required>
-      	<i class='bx bxs-user'></i>
-      </div>
-      <div class="input-box">
-      	<input type="password" name="password" placeholder="Password" required>
-      	<i class='bx bxs-lock-alt' ></i>
-      </div>
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="input-box">
+        <input type="text" name="email" placeholder="Email or Username" required>
+        <i class='bx bxs-user'></i>
+      </div>
 
-    	<!-- --- CONNECTION FIX: Added "Remember Me" and "Forgot Password" --- -->
-    	<div class="remember-forgot">
-      	<label><input type="checkbox" name="remember"> Remember me</label>
-      	<!-- This now links to your forgot_password route -->
-      	<a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
-  	</div>
+      <div class="input-box">
+        <input type="password" name="password" placeholder="Password" required>
+        <i class='bx bxs-lock-alt'></i>
+      </div>
 
-    	<button type="submit" class="btn">Login</button>
-    s   
-    	<div class="register-link">
-      	<!-- --- CONNECTION FIX: Hard-coded link changed to url_for() --- -->
-      	<p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
-    	</div>
-  	</form>
-  </div>
+      <div class="remember-forgot">
+        <label><input type="checkbox" name="remember"> Remember me</label>
+        <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+      </div>
+
+      <button type="submit" class="btn">Login</button>
+
+      <div class="register-link">
+        <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+      </div>
+    </form>
+  </div>
 </body>
 </html>
