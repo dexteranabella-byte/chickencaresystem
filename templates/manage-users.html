@@ -1,209 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Manage Users</title>
-<!-- ======= Styles ====== -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- Font Awesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users | ChickCare</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Boxicons -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-
-    <!-- =============== Navigation ================ -->
-    <div class="container">
-        <div class="navigation">
-            <ul>
-                <li>
-                    <a href="#">
-                        <span class="icon">
-                            <img src="static/imgs/CC.png">
-                        </span>
-                        <span class="title1">Chick Care</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="/main_dashboard">
-                        <span class="icon">
-                            <ion-icon name="reorder-four-outline"></ion-icon>
-                        </span>
-                        <span class="title">Dashboard</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="/webcam">
-                        <span class="icon">
-                            <ion-icon name="stats-chart-outline"></ion-icon>
-                        </span>
-                        <span class="title">Growth Tracking</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="/feeding">
-                        <span class="icon">
-                            <ion-icon name="layers-outline"></ion-icon>
-                        </span>
-                        <span class="title">Supplies Stock</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="/environment">
-                        <span class="icon">
-                            <ion-icon name="cloudy-outline"></ion-icon>
-                        </span>
-                        <span class="title">Environment</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="/dashboard">
-                        <span class="icon">
-                            <ion-icon name="notifications-circle-outline"></ion-icon>
-                        </span>
-                        <span class="title">Notifications</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="/sanitization">
-                        <span class="icon">
-                            <ion-icon name="water-outline"></ion-icon>
-                        </span>
-                        <span class="title">Sanitization</span>
-                    </a>
-                </li>
-
-                <!-- Only show "Manage Users" if the logged-in user is an admin -->
-                {% if session['user_role'] == 'admin' %}
-                <li>
-                    <a href="/manage_users">
-                        <span class="icon">
-                            <ion-icon name="people-outline"></ion-icon>
-                        </span>
-                        <span class="title">Manage Users</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                <li>
-                    <a href="/report">
-                        <span class="icon">
-                            <ion-icon name="file-tray-stacked-outline"></ion-icon>
-                        </span>
-                        <span class="title">Report</span>
-                    </a>
-                </li>
-
-
-                <li>
-                    <a href="/login">
-                        <span class="icon">
-                            <ion-icon name="log-out-outline"></ion-icon>
-                        </span>
-                        <span class="title">Sign Out</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- ========================= Main ==================== -->
-        <div class="main">
-            <div class="topbar">
-                <div class="toggle">
-                    <ion-icon name="menu-outline"></ion-icon>
-                </div>
-
-                <div class="datetime">
-                    <span id="displayDateTime"></span>
-                </div>
-
-
-		        <div class="iconn" onclick="toggleNotifi()">
-			    <img src="static/imgs/bell.png" alt=""> <span id="notificationCount">0</span>
-		        </div>
-		        <div class="notifi-box" id="box">
-			        <h2>Notifications <span id="notificationCount1">0</span></h2>
-			    <div class="notifi-item">
-
-				    <div class="text" id="notificationItems">
-
-			        </div>
-			    </div>
-
-
-		        </div>
-
-
-
-                <div class="user">
-                    <img src="static/imgs/admin.jpg" alt="">
-                </div>
-            </div>
-
-        <!-- ========================= Feeding Schedule ==================== -->
-            <div class="schedule1">
-                <h1>Manage Users</h1>
-
-                <!-- Buttons for Admin to Edit or Delete a user -->
-                <div class="admin-actions">
-                    <button class="popBtn" onclick="editUser()">Edit User</button>
-                    <div class="wrapper1">
-	                        <form action="" id="editUserForm">
-		                        <i class="fa-solid fa-circle-xmark close"></i>
-		                        <h2>Manage Users</h2>
-		                        <label for="email">Email</label>
-		                        <input type="email" id="email" required>
-
-		                        <label for="username">Username</label>
-		                        <input type="text" id="username">
-
-		                        <label for="password">Password</label>
-		                        <input type="password" id="password">
-
-
-
-		                        <button type="submit" class="submit-edit">SUBMIT</button>
-	                        </form>
-                    </div>
-                    <button class="btn-delete" onclick="deleteUser()">Delete User</button>
-                </div>
-
-                <!-- Table: ID, Email, Username, Password -->
-                <div id="table-users" class="tableSched1">
-                    <table class="meal-table1">
-                        <thead>
-                            <tr>
-                                <th>Select</th>
-                                <th>Email</th>
-                                <th>Username</th>
-                                <th>Password</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- More rows loaded here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
+  <div class="container">
+    <!-- ======= Navigation ======= -->
+    <div class="navigation">
+      <ul>
+        <li>
+          <a href="{{ url_for('dashboard') }}">
+            <span class="icon"><i class='bx bxs-chicken'></i></span>
+            <span class="title">ChickCare</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('admin_dashboard') }}">
+            <span class="icon"><i class='bx bxs-dashboard'></i></span>
+            <span class="title">Admin Dashboard</span>
+          </a>
+        </li>
+        <li class="active">
+          <a href="{{ url_for('manage_users') }}">
+            <span class="icon"><i class='bx bx-user'></i></span>
+            <span class="title">Manage Users</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('report') }}">
+            <span class="icon"><i class='bx bx-file'></i></span>
+            <span class="title">Reports</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('logout') }}">
+            <span class="icon"><i class='bx bx-log-out'></i></span>
+            <span class="title">Logout</span>
+          </a>
+        </li>
+      </ul>
     </div>
+    <!-- ======= Main Section ======= -->
+    <div class="main">
+      <div class="topbar">
+        <div class="toggle"><i class='bx bx-menu'></i></div>
+        <div class="title">Manage Users</div>
+      </div>
 
-
-
-    <!-- =========== Scripts =========  -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-    <!-- ====== ionicons ======= -->
-    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-
-
-
+      <!-- ======= User List Table ======= -->
+      <div class="details">
+        <div class="recentOrders">
+          <div class="cardHeader">
+            <h2>All Registered Users</h2>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loop through users passed from the backend -->
+              {% for user in users %}
+              <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                    <a href="#" class="btn-edit">Edit</a>
+                    <a href="#" class="btn-delete">Delete</a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5">No users found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ======= Script ======= -->
+  <script>
+    // Sidebar toggle
+    const toggle = document.querySelector('.toggle');
+    const navigation = document.querySelector('.navigation');
+    const main = document.querySelector('.main');
+    toggle.addEventListener('click', () => {
+      navigation.classList.toggle('active');
+      main.classList.toggle('active');
+    });
+  </script>
 </body>
 </html>
