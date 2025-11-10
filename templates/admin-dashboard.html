@@ -4,42 +4,10 @@
   <meta charset="UTF-8">
   <title>Admin Dashboard | Chick Care</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <style>
-    /* Minimal custom styles for admin tab navigation */
-    .admin-tabs {
-      margin: 20px;
-    }
-    .admin-tabs ul {
-      list-style: none;
-      display: flex;
-      padding: 0;
-      margin: 0;
-      border-bottom: 2px solid #ccc;
-    }
-    .admin-tabs ul li {
-      margin-right: 20px;
-    }
-    .admin-tabs ul li a {
-      text-decoration: none;
-      color: var(--blue);
-      font-weight: bold;
-      padding: 10px;
-      display: block;
-    }
-    .admin-tabs ul li a.active {
-      border-bottom: 3px solid var(--blue);
-    }
-    .tab-content {
-      display: none;
-      padding: 20px;
-    }
-    .tab-content.active {
-      display: block;
-    }
-  </style>
-</head>
+  </head>
 <body>
   <div class="container">
+    
     <div class="navigation">
         <ul>
             <li>
@@ -50,15 +18,14 @@
                     <span class="title1">Chick Care</span>
                 </a>
             </li>
-
             <li>
-                <a href="/main_dashboard"> <span class="icon">
+                <a href="/main_dashboard">
+                    <span class="icon">
                         <ion-icon name="reorder-four-outline"></ion-icon>
                     </span>
                     <span class="title">Dashboard</span>
                 </a>
             </li>
-
             <li>
                 <a href="/webcam">
                     <span class="icon">
@@ -67,7 +34,6 @@
                     <span class="title">Growth Tracking</span>
                 </a>
             </li>
-
             <li>
                 <a href="/feeding">
                     <span class="icon">
@@ -76,7 +42,6 @@
                     <span class="title">Supplies Stock</span>
                 </a>
             </li>
-
             <li>
                 <a href="/environment">
                     <span class="icon">
@@ -85,15 +50,14 @@
                     <span class="title">Environment</span>
                 </a>
             </li>
-
             <li>
-                <a href="/dashboard"> <span class="icon">
+                <a href="/dashboard">
+                    <span class="icon">
                         <ion-icon name="notifications-circle-outline"></ion-icon>
                     </span>
                     <span class="title">Notifications</span>
                 </a>
             </li>
-
             <li>
                 <a href="/sanitization">
                     <span class="icon">
@@ -128,7 +92,6 @@
                     <span class="title">Report</span>
                 </a>
             </li>
-
             <li>
                 <a href="{{ url_for('logout') }}">
                     <span class="icon">
@@ -157,35 +120,10 @@
             </div>
         </div>
 
-        <div class="admin-tabs">
-            <ul>
-                <li><a href="#manageUsers" class="tab-link active">Manage Users</a></li>
-                <li><a href="#systemFunctions" class="tab-link">System Functions</a></li>
-            </ul>
-        </div>
-
-        <div id="manageUsers" class="tab-content active">
-            <h1>Manage Users</h1>
-            <div id="table-users">
-                <table border="1">
-                    <thead>
-                        <tr>
-                            <th>User ID</th>
-                            <th>Email</th>
-                            <th>Username</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="systemFunctions" class="tab-content">
+        <div class="details" style="padding: 20px;">
             <h1>System Functions</h1>
             <div id="table-system">
-                <table border="1">
+                <table border="1" style="width: 100%;">
                     <thead>
                         <tr>
                             <th>DateTime</th>
@@ -197,32 +135,14 @@
                 </table>
             </div>
         </div>
-        </div>
-  </div>
 
-  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    </div> </div> <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
   
   <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
   
   <script>
-    // --- JavaScript for admin tab switching ---
-    const tabLinks = document.querySelectorAll('.tab-link');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    tabLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        // Remove active class from all tab links and contents
-        tabLinks.forEach(link => link.classList.remove('active'));
-        tabContents.forEach(content => content.classList.remove('active'));
-
-        // Add active class to the clicked tab and its corresponding content
-        this.classList.add('active');
-        const target = this.getAttribute('href');
-        document.querySelector(target).classList.add('active');
-      });
-    });
+    // Tab switching script is removed (no longer needed)
 
     // --- Real-time Date and Time Display ---
     document.addEventListener('DOMContentLoaded', function() {
@@ -240,7 +160,7 @@
                     minute: '2-digit',
                     second: '2-digit'
                 };
-                dateTimeSpan.textContent = now.toLocaleDateString('en-US', options);
+                dateTimeSpan.textContent = now.toLocaleString('en-US', options);
             }
         }
         
