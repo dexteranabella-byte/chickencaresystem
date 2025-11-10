@@ -4,10 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | ChickCare</title>
+
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
   <!-- Boxicons -->
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -48,12 +51,14 @@
         </li>
       </ul>
     </div>
+
     <!-- ======= Main Section ======= -->
     <div class="main">
       <div class="topbar">
         <div class="toggle"><i class='bx bx-menu'></i></div>
         <div class="title">Admin Control Panel</div>
       </div>
+
       <!-- ======= Dashboard Overview ======= -->
       <div class="cardBox">
         <div class="card">
@@ -64,6 +69,7 @@
           </div>
           <div class="iconBx"><i class='bx bx-user'></i></div>
         </div>
+
         <div class="card">
           <div>
             <!-- FIX: Connected to 'reports_count' from app.py -->
@@ -72,6 +78,7 @@
           </div>
           <div class="iconBx"><i class='bx bx-file'></i></div>
         </div>
+
         <div class="card">
           <div>
             <!-- FIX: Connected to 'active_farms' from app.py -->
@@ -80,6 +87,7 @@
           </div>
           <div class="iconBx"><i class='bx bx-home-smile'></i></div>
         </div>
+
         <div class="card">
           <div>
             <!-- FIX: Connected to 'alerts_count' from app.py -->
@@ -89,6 +97,7 @@
           <div class="iconBx"><i class='bx bx-bell'></i></div>
         </div>
       </div>
+
       <!-- ======= Recent Activity ======= -->
       <div class="details">
         <div class="recentOrders">
@@ -96,6 +105,7 @@
             <!-- FIX: Title matches the data from app.py -->
             <h2>Recent Sensor Activity</h2>
           </div>
+
           <table>
             <thead>
               <tr>
@@ -110,6 +120,7 @@
               <!-- FIX: Looping over 'recent_activity' from app.py -->
               {% for activity in recent_activity %}
               <tr>
+                <!-- FIX: Using data from the 'sensordata' table -->
                 <td>{{ activity.datetime.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td>{{ activity.temperature }} °C</td>
                 <td>{{ activity.humidity }} %</td>
@@ -126,12 +137,14 @@
       </div>
     </div>
   </div>
+
   <!-- ======= Script ======= -->
   <script>
     // Sidebar toggle
     const toggle = document.querySelector('.toggle');
     const navigation = document.querySelector('.navigation');
     const main = document.querySelector('.main');
+
     toggle.addEventListener('click', () => {
       navigation.classList.toggle('active');
       main.classList.toggle('active');
