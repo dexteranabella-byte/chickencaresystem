@@ -1,6 +1,6 @@
 # app.py - full rewrite
-# This version is identical to cpdetxt.txt,
-# except for the init-db command, which now points to the fixed SQL file.
+# This version includes the fix for the login error
+# and the updated admin_dashboard route for the new template.
 
 import os
 import logging
@@ -199,9 +199,9 @@ def get_db_pool():
                 max_size=10,
                 timeout=30,
                 max_lifetime=300,
-                # --- THIS IS THE ONLY LINE I ADDED ---
+                # --- FIX: Added this line to make all connections return dicts ---
                 kwargs={"row_factory": dict_row}
-                # ---------------------------------------
+                # ---------------------------------------------------------------
             )
             logger.info("Connection pool created.")
         except Exception as e:
@@ -306,6 +306,7 @@ def forgot_password():
             logger.error(f"Forgot password error: {e}")
             flash("An error occurred. Please try again.", "danger")
             
+    # This will now work because we are creating 'forgot-password.html'
     return render_template("forgot-password.html")
 
 
@@ -338,6 +339,7 @@ def reset_password(token):
             logger.error(f"Reset password error: {e}")
             flash("An error occurred while updating your password.", "danger")
 
+    # This will now work because we are creating 'reset-password.html'
     return render_template("reset-password.html", token=token)
 
 
@@ -459,6 +461,7 @@ def admin_dashboard():
     """Admin dashboard."""
     try:
         with get_conn() as conn, conn.cursor() as cur:
+            
             # Get user count
             cur.execute("SELECT COUNT(*) AS user_count FROM users")
             user_count = cur.fetchone()["user_count"]
@@ -466,11 +469,20 @@ def admin_dashboard():
             # Get recent activity (example: recent sensor data)
             cur.execute("SELECT * FROM sensordata ORDER BY datetime DESC LIMIT 5")
             recent_activity = cur.fetchall()
+
+            # --- NEW: Get alerts count ---
+            cur.execute("SELECT COUNT(*) AS alerts_count FROM notifications")
+            alerts_count = cur.fetchone()["alerts_count"]
             
         return render_template(
             "admin-dashboard.html",
-            user_count=user_count,
-            recent_activity=recent_activity
+            user_count=user_count,        # For "Active Users" card
+            recent_activity=recent_activity, # For "Recent Activity" table
+            alerts_count=alerts_count,     # For "Alerts" card
+            
+            # Mocked data for cards that have no data source
+            reports_count=0,               # Mocked
+            active_farms=1                 # Mocked
         )
     except Exception as e:
         logger.error(f"Admin dashboard error: {e}")
@@ -486,6 +498,7 @@ def manage_users():
         with get_conn() as conn, conn.cursor() as cur:
             cur.execute("SELECT id, username, email, role FROM users")
             users = cur.fetchall()
+        # This will now work because we are creating 'manage-users.html'
         return render_template("manage-users.html", users=users)
     except Exception as e:
         logger.error(f"Manage users error: {e}")
