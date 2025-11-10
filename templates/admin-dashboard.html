@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard | Chick Care</title>
-  <!-- ======= Styles ====== -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
     /* Minimal custom styles for admin tab navigation */
@@ -41,97 +40,173 @@
 </head>
 <body>
   <div class="container">
-    <!-- Modified Navigation for Admin -->
     <div class="navigation">
-      <ul>
-        <li>
-          <a href="#manageUsers" class="tab-link active">Manage Users</a>
-        </li>
-        <li>
-          <a href="#systemFunctions" class="tab-link">System Functions</a>
-        </li>
-        <li>
-          <a href="/login">Sign Out</a>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Main Admin Content -->
-    <div class="main">
-      <div class="topbar">
-        <div class="toggle">
-          <ion-icon name="menu-outline"></ion-icon>
-        </div>
-        <div class="datetime">
-          <span id="displayDateTime"></span>
-        </div>
-        <div class="iconn" onclick="toggleNotifi()">
-          <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt="">
-          <span id="notificationCount">0</span>
-        </div>
-        <div class="user">
-          <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="">
-        </div>
-      </div>
-
-      <!-- Admin Tabs -->
-      <div class="admin-tabs">
         <ul>
-          <li><a href="#manageUsers" class="tab-link active">Manage Users</a></li>
-          <li><a href="#systemFunctions" class="tab-link">System Functions</a></li>
+            <li>
+                <a href="#">
+                    <span class="icon">
+                        <img src="{{ url_for('static', filename='imgs/CC.png') }}">
+                    </span>
+                    <span class="title1">Chick Care</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/main_dashboard"> <span class="icon">
+                        <ion-icon name="reorder-four-outline"></ion-icon>
+                    </span>
+                    <span class="title">Dashboard</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/webcam">
+                    <span class="icon">
+                        <ion-icon name="stats-chart-outline"></ion-icon>
+                    </span>
+                    <span class="title">Growth Tracking</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/feeding">
+                    <span class="icon">
+                        <ion-icon name="layers-outline"></ion-icon>
+                    </span>
+                    <span class="title">Supplies Stock</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/environment">
+                    <span class="icon">
+                        <ion-icon name="cloudy-outline"></ion-icon>
+                    </span>
+                    <span class="title">Environment</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/dashboard"> <span class="icon">
+                        <ion-icon name="notifications-circle-outline"></ion-icon>
+                    </span>
+                    <span class="title">Notifications</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/sanitization">
+                    <span class="icon">
+                        <ion-icon name="water-outline"></ion-icon>
+                    </span>
+                    <span class="title">Sanitization</span>
+                </a>
+            </li>
+
+            {% if session['role'] == 'admin' or session['role'] == 'superadmin' %}
+            <li class="active"> <a href="{{ url_for('admin_dashboard') }}">
+                    <span class="icon">
+                        <ion-icon name="cog-outline"></ion-icon>
+                    </span>
+                    <span class="title">Admin Dashboard</span>
+                </a>
+            </li>
+            <li> <a href="{{ url_for('manage_users') }}">
+                    <span class="icon">
+                        <ion-icon name="people-outline"></ion-icon>
+                    </span>
+                    <span class="title">Manage Users</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <li>
+                <a href="/report">
+                    <span class="icon">
+                        <ion-icon name="file-tray-stacked-outline"></ion-icon>
+                    </span>
+                    <span class="title">Report</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('logout') }}">
+                    <span class="icon">
+                        <ion-icon name="log-out-outline"></ion-icon>
+                    </span>
+                    <span class="title">Sign Out</span>
+                </a>
+            </li>
         </ul>
-      </div>
-
-      <!-- Tab Content: Manage Users -->
-      <div id="manageUsers" class="tab-content active">
-        <h1>Manage Users</h1>
-        <!-- User Management Table -->
-        <div id="table-users">
-          <table border="1">
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>Email</th>
-                <th>Username</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- User data dynamically loaded from the database -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Tab Content: System Functions -->
-      <div id="systemFunctions" class="tab-content">
-        <h1>System Functions</h1>
-        <!-- System Management Table (e.g., Notifications, Logs, Reports) -->
-        <div id="table-system">
-          <table border="1">
-            <thead>
-              <tr>
-                <th>DateTime</th>
-                <th>Message</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- System logs or notification data dynamically loaded -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
     </div>
+
+    <div class="main">
+        <div class="topbar">
+            <div class="toggle">
+                <ion-icon name="menu-outline"></ion-icon>
+            </div>
+            <div class="datetime">
+                <span id="displayDateTime"></span>
+            </div>
+            <div class="iconn" onclick="toggleNotifi()">
+                <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt="">
+                <span id="notificationCount">0</span>
+            </div>
+            <div class="user">
+                <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="">
+            </div>
+        </div>
+
+        <div class="admin-tabs">
+            <ul>
+                <li><a href="#manageUsers" class="tab-link active">Manage Users</a></li>
+                <li><a href="#systemFunctions" class="tab-link">System Functions</a></li>
+            </ul>
+        </div>
+
+        <div id="manageUsers" class="tab-content active">
+            <h1>Manage Users</h1>
+            <div id="table-users">
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Email</th>
+                            <th>Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="systemFunctions" class="tab-content">
+            <h1>System Functions</h1>
+            <div id="table-system">
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>DateTime</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        </div>
   </div>
 
-  <!-- =========== Ionicons Scripts =========  -->
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-  <!-- =========== Main Scripts =========  -->
+  
   <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  
   <script>
-    // JavaScript for admin tab switching
+    // --- JavaScript for admin tab switching ---
     const tabLinks = document.querySelectorAll('.tab-link');
     const tabContents = document.querySelectorAll('.tab-content');
 
@@ -147,6 +222,30 @@
         const target = this.getAttribute('href');
         document.querySelector(target).classList.add('active');
       });
+    });
+
+    // --- Real-time Date and Time Display ---
+    document.addEventListener('DOMContentLoaded', function() {
+        let dateTimeSpan = document.getElementById('displayDateTime'); 
+        
+        function updateDateTime() {
+            if (dateTimeSpan) {
+                const now = new Date();
+                const options = {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+                dateTimeSpan.textContent = now.toLocaleDateString('en-US', options);
+            }
+        }
+        
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
     });
   </script>
 </body>
