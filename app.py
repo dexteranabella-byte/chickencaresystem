@@ -1,6 +1,6 @@
 # app.py - full rewrite
-# This version includes the fix for the login error
-# and the updated admin_dashboard route for the new template.
+# This version includes fixes for all 404 errors from the logs
+# by adding the missing API routes.
 
 import os
 import logging
@@ -286,7 +286,8 @@ def forgot_password():
             
             if user:
                 token = serializer.dumps(email, salt=SALT)
-                reset_url = url_for("reset_password", token=token, _external=True)
+                # --- FIX: Changed to 'reset_with_token' to match new HTML ---
+                reset_url = url_for("reset_with_token", token=token, _external=True)
                 
                 # Send email logic
                 msg_title = "Password Reset Request"
@@ -306,12 +307,12 @@ def forgot_password():
             logger.error(f"Forgot password error: {e}")
             flash("An error occurred. Please try again.", "danger")
             
-    # This will now work because we are creating 'forgot-password.html'
     return render_template("forgot-password.html")
 
 
+# --- FIX: Renamed function and route endpoint to match new HTML ---
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
-def reset_password(token):
+def reset_with_token(token):
     """Page for resetting password using the token."""
     try:
         email = serializer.loads(token, salt=SALT, max_age=3600) # Token valid for 1 hour
@@ -339,7 +340,6 @@ def reset_password(token):
             logger.error(f"Reset password error: {e}")
             flash("An error occurred while updating your password.", "danger")
 
-    # This will now work because we are creating 'reset-password.html'
     return render_template("reset-password.html", token=token)
 
 
@@ -505,6 +505,16 @@ def manage_users():
         flash("Error loading user management page.", "danger")
         return redirect(url_for("admin_dashboard"))
 
+# --- NEW ROUTE TO FIX THE ADMIN DASHBOARD CRASH ---
+@app.route("/report")
+@login_required
+@role_required("admin", "superadmin")
+def report():
+    """Admin page for viewing reports."""
+    # This is a placeholder. You can add data logic later.
+    return render_template("report.html")
+# --------------------------------------------------
+
 # Note: Add routes for admin to edit/delete users (omitted for brevity)
 
 # -------------------------\
@@ -557,6 +567,69 @@ def get_chart_data():
     except Exception as e:
         logger.error(f"API chart_data error: {e}")
         return jsonify({"error": "server error"}), 500
+
+
+# --- FIX: ADDED MISSING API ROUTES FROM LOGS ---
+
+@app.route("/data")
+@login_required
+def get_data():
+    """Alias for /api/sensor_data to fix 404s."""
+    return get_sensor_data()
+
+@app.route("/get_growth_data")
+@login_required
+def get_growth_data():
+    """Alias for /api/chart_data to fix 404s."""
+    return get_chart_data()
+
+@app.route("/get_notifications_data")
+@login_required
+def get_notifications_data():
+    """API endpoint for notifications."""
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT * FROM notifications ORDER BY datetime DESC LIMIT 10")
+            data = cur.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"API get_notifications_data error: {e}")
+        return jsonify({"error": "server error"}), 500
+
+@app.route("/get_all_data6")
+@login_required
+def get_all_data6():
+    """Placeholder for missing table/view."""
+    logger.warning("Frontend called /get_all_data6, but no data source exists.")
+    return jsonify([]) # Return empty list to avoid breaking frontend
+
+@app.route("/get_all_data3")
+@login_required
+def get_all_data3():
+    """API endpoint for weight data (sensordata3)."""
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT * FROM sensordata3 ORDER BY datetime DESC LIMIT 20")
+            data = cur.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"API get_all_data3 error: {e}")
+        return jsonify({"error": "server error"}), 500
+
+@app.route("/get_chickstatus_data")
+@login_required
+def get_chickstatus_data():
+    """API endpoint for chick status."""
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT * FROM chickstatus ORDER BY datetime DESC LIMIT 20")
+            data = cur.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"API get_chickstatus_data error: {e}")
+        return jsonify({"error": "server error"}), 500
+
+# ------------------------------------------------
 
 # -------------------------\
 # Hardware Control API
