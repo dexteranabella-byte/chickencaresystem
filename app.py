@@ -1,6 +1,6 @@
 # app.py - full rewrite
-# This version includes fixes for all 404 errors from the logs
-# by adding the missing API routes.
+# This version fixes the critical database connection pool leak
+# by implementing try...finally blocks in all routes.
 
 import os
 import logging
@@ -30,8 +30,6 @@ logging.basicConfig(level=logging.INFO)
 logger = app.logger
 
 # Environment / secrets (use real env in production)
-# You can set these in Render / your environment:
-# SUPER_ADMIN_USER, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASS
 app.secret_key = os.environ.get("SECRET_KEY", "change_me_for_prod")
 DB_URL_RAW = os.environ.get("DATABASE_URL", "postgresql://user:pass@localhost/db")
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
@@ -103,9 +101,11 @@ def login():
     if request.method == "POST":
         email_or_user = request.form["email"]
         password = request.form["password"]
-
+        
+        conn = None
         try:
-            with get_conn() as conn, conn.cursor() as cur:
+            conn = get_conn()
+            with conn.cursor() as cur:
                 # Check database first
                 cur.execute(
                     "SELECT * FROM users WHERE email = %s OR username = %s",
@@ -113,35 +113,37 @@ def login():
                 )
                 user = cur.fetchone()
 
-                if user and check_password_hash(user["password"], password):
-                    session["user_id"] = user["id"]
-                    session["username"] = user["username"]
-                    session["role"] = user["role"]
-                    logger.info(f"User {user['username']} (role: {user['role']}) logged in.")
-                    
-                    if user["role"] == "admin":
-                        return redirect(url_for("admin_dashboard"))
-                    else:
-                        return redirect(url_for("dashboard"))
+            if user and check_password_hash(user["password"], password):
+                session["user_id"] = user["id"]
+                session["username"] = user["username"]
+                session["role"] = user["role"]
+                logger.info(f"User {user['username']} (role: {user['role']}) logged in.")
                 
-                # --- Superadmin Fallback ---
-                # If DB login fails, check against superadmin env vars
-                is_super_email = (email_or_user == SUPER_ADMIN_EMAIL)
-                is_super_user = (email_or_user == SUPER_ADMIN_USER)
-                is_super_pass = (password == SUPER_ADMIN_PASS)
-
-                if (is_super_email or is_super_user) and is_super_pass:
-                    session["user_id"] = "superadmin"
-                    session["username"] = "Superadmin"
-                    session["role"] = "superadmin"
-                    logger.info("Superadmin logged in.")
+                if user["role"] == "admin":
                     return redirect(url_for("admin_dashboard"))
+                else:
+                    return redirect(url_for("dashboard"))
+            
+            # --- Superadmin Fallback ---
+            is_super_email = (email_or_user == SUPER_ADMIN_EMAIL)
+            is_super_user = (email_or_user == SUPER_ADMIN_USER)
+            is_super_pass = (password == SUPER_ADMIN_PASS)
 
-                flash("Invalid email/username or password.", "danger")
+            if (is_super_email or is_super_user) and is_super_pass:
+                session["user_id"] = "superadmin"
+                session["username"] = "Superadmin"
+                session["role"] = "superadmin"
+                logger.info("Superadmin logged in.")
+                return redirect(url_for("admin_dashboard"))
+
+            flash("Invalid email/username or password.", "danger")
 
         except Exception as e:
             logger.error(f"Login error: {e}")
             flash("An error occurred during login. Please try again.", "danger")
+        finally:
+            if conn:
+                release_conn(conn)
 
     return render_template("login.html")
 
@@ -155,12 +157,12 @@ def register():
         password = request.form["password"]
 
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-        
-        # Default role is 'user'
         role = "user" 
-
+        
+        conn = None
         try:
-            with get_conn() as conn, conn.cursor() as cur:
+            conn = get_conn()
+            with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO users (email, username, password, role) VALUES (%s, %s, %s, %s)",
                     (email, username, hashed_password, role),
@@ -170,10 +172,17 @@ def register():
             return redirect(url_for("login"))
         
         except pg_errors.UniqueViolation:
+            if conn:
+                conn.rollback()
             flash("Email or username already exists.", "danger")
         except Exception as e:
+            if conn:
+                conn.rollback()
             logger.error(f"Registration error: {e}")
             flash("An error occurred. Please try again.", "danger")
+        finally:
+            if conn:
+                release_conn(conn)
 
     return render_template("register.html")
 
@@ -199,22 +208,21 @@ def get_db_pool():
                 max_size=10,
                 timeout=30,
                 max_lifetime=300,
-                # --- FIX: Added this line to make all connections return dicts ---
+                # --- FIX: This line is correct ---
                 kwargs={"row_factory": dict_row}
-                # ---------------------------------------------------------------
             )
             logger.info("Connection pool created.")
         except Exception as e:
             logger.error(f"Failed to create connection pool: {e}")
-            db_pool = None # Ensure it's None if creation fails
+            db_pool = None 
     return db_pool
 
+# --- FIX: This is the new connection management logic ---
 def get_conn():
     """Gets a connection from the pool or creates a new one."""
     pool = get_db_pool()
     if pool:
         try:
-            # This connection will now use dict_row from the pool's config
             return pool.getconn()
         except Exception as e:
             logger.error(f"Error getting connection from pool: {e}")
@@ -225,50 +233,61 @@ def get_conn():
         return psycopg.connect(DB_URL_RAW, row_factory=dict_row)
 
 def release_conn(conn):
-    """Releases a connection back to the pool."""
+    """Releases a connection back to the pool or closes it."""
     pool = get_db_pool()
     if pool and conn:
         try:
-            pool.putconn(conn)
+            # If the connection came from the pool, put it back
+            if hasattr(conn, "pool") and conn.pool == pool:
+                 pool.putconn(conn)
+            else:
+                # If it was a fallback connection, just close it
+                conn.close()
         except Exception as e:
-            logger.error(f"Error releasing connection to pool: {e}")
+            logger.error(f"Error releasing connection: {e}")
             conn.close() # Close if it can't be put back
     elif conn:
         conn.close() # Close if no pool
+# ---------------------------------------------------------
 
 
 @app.cli.command("init-db")
 def init_tables():
     """Create all tables defined in init_postgres_fixed.sql."""
-    with get_conn() as conn, conn.cursor() as cur:
-        try:
-            # --- THIS IS THE ONLY LINE I CHANGED ---
+    conn = None
+    try:
+        conn = get_conn()
+        with conn.cursor() as cur:
             with open("init_postgres_fixed.sql", "r") as f:
-            # ---------------------------------------
                 sql = f.read()
                 cur.execute(sql)
             conn.commit()
-            logger.info("Database tables created.")
-        except pg_errors.UndefinedTable:
+        logger.info("Database tables created.")
+    except pg_errors.UndefinedTable:
+        if conn:
             conn.rollback()
-            logger.error("Error: Could not drop tables (they may not exist). Retrying...")
-            # If tables don't exist, DROP will fail. Try again without DROP.
-            try:
+        logger.error("Error: Could not drop tables (they may not exist). Retrying...")
+        try:
+            with conn.cursor() as cur:
                 with open("init_postgres_fixed.sql", "r") as f:
-                    # A bit crude, but remove DROP commands
                     sql_no_drops = "\n".join(
                         line for line in f.read().splitlines() 
                         if not line.strip().upper().startswith("DROP TABLE")
                     )
                     cur.execute(sql_no_drops)
                 conn.commit()
-                logger.info("Database tables created (without drops).")
-            except Exception as e_retry:
+            logger.info("Database tables created (without drops).")
+        except Exception as e_retry:
+            if conn:
                 conn.rollback()
-                logger.error(f"Failed to init tables on retry: {e_retry}")
-        except Exception as e:
+            logger.error(f"Failed to init tables on retry: {e_retry}")
+    except Exception as e:
+        if conn:
             conn.rollback()
-            logger.error(f"Failed to init tables: {e}")
+        logger.error(f"Failed to init tables: {e}")
+    finally:
+        if conn:
+            release_conn(conn)
 
 
 # -------------------------\
@@ -279,17 +298,17 @@ def forgot_password():
     """Page for requesting a password reset."""
     if request.method == "POST":
         email = request.form["email"]
+        conn = None
         try:
-            with get_conn() as conn, conn.cursor() as cur:
+            conn = get_conn()
+            with conn.cursor() as cur:
                 cur.execute("SELECT * FROM users WHERE email = %s", (email,))
                 user = cur.fetchone()
             
             if user:
                 token = serializer.dumps(email, salt=SALT)
-                # --- FIX: Changed to 'reset_with_token' to match new HTML ---
                 reset_url = url_for("reset_with_token", token=token, _external=True)
                 
-                # Send email logic
                 msg_title = "Password Reset Request"
                 msg_body = f"Click the link to reset your password: {reset_url}"
                 msg = Message(msg_title, recipients=[email], body=msg_body)
@@ -306,29 +325,30 @@ def forgot_password():
         except Exception as e:
             logger.error(f"Forgot password error: {e}")
             flash("An error occurred. Please try again.", "danger")
+        finally:
+            if conn:
+                release_conn(conn)
             
     return render_template("forgot-password.html")
 
 
-# --- FIX: Renamed function and route endpoint to match new HTML ---
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_with_token(token):
     """Page for resetting password using the token."""
     try:
-        email = serializer.loads(token, salt=SALT, max_age=3600) # Token valid for 1 hour
-    except SignatureExpired:
-        flash("The password reset link has expired.", "danger")
-        return redirect(url_for("forgot_password"))
-    except BadSignature:
-        flash("Invalid password reset link.", "danger")
+        email = serializer.loads(token, salt=SALT, max_age=3600)
+    except (SignatureExpired, BadSignature):
+        flash("Invalid or expired password reset link.", "danger")
         return redirect(url_for("forgot_password"))
 
     if request.method == "POST":
         new_password = request.form["password"]
         hashed_password = generate_password_hash(new_password, method="pbkdf2:sha256")
         
+        conn = None
         try:
-            with get_conn() as conn, conn.cursor() as cur:
+            conn = get_conn()
+            with conn.cursor() as cur:
                 cur.execute(
                     "UPDATE users SET password = %s, reset_token = NULL WHERE email = %s",
                     (hashed_password, email)
@@ -337,8 +357,13 @@ def reset_with_token(token):
             flash("Your password has been updated successfully!", "success")
             return redirect(url_for("login"))
         except Exception as e:
+            if conn:
+                conn.rollback()
             logger.error(f"Reset password error: {e}")
             flash("An error occurred while updating your password.", "danger")
+        finally:
+            if conn:
+                release_conn(conn)
 
     return render_template("reset-password.html", token=token)
 
@@ -358,7 +383,6 @@ def profile():
     """User profile page."""
     user_id = session["user_id"]
     if user_id == "superadmin":
-        # Handle superadmin profile (no DB entry)
         user_data = {
             "username": "Superadmin",
             "email": SUPER_ADMIN_EMAIL,
@@ -366,8 +390,10 @@ def profile():
         }
         return render_template("profile.html", user=user_data)
 
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute("SELECT id, username, email, role FROM users WHERE id = %s", (user_id,))
             user = cur.fetchone()
         
@@ -380,6 +406,9 @@ def profile():
         logger.error(f"Profile load error: {e}")
         flash("Error loading profile.", "danger")
         return redirect(url_for("dashboard"))
+    finally:
+        if conn:
+            release_conn(conn)
 
 
 @app.route("/update-profile", methods=["POST"])
@@ -394,23 +423,31 @@ def update_profile():
     username = request.form["username"]
     email = request.form["email"]
     
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute(
                 "UPDATE users SET username = %s, email = %s WHERE id = %s",
                 (username, email, user_id)
             )
             conn.commit()
             
-        # Update session
         session["username"] = username
         flash("Profile updated successfully!", "success")
         
     except pg_errors.UniqueViolation:
+        if conn:
+            conn.rollback()
         flash("Email or username already in use.", "danger")
     except Exception as e:
+        if conn:
+            conn.rollback()
         logger.error(f"Profile update error: {e}")
         flash("Error updating profile.", "danger")
+    finally:
+        if conn:
+            release_conn(conn)
         
     return redirect(url_for("profile"))
 
@@ -427,8 +464,10 @@ def update_password():
     old_pass = request.form["old_password"]
     new_pass = request.form["new_password"]
 
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute("SELECT password FROM users WHERE id = %s", (user_id,))
             user = cur.fetchone()
             
@@ -446,8 +485,13 @@ def update_password():
         flash("Password updated successfully!", "success")
         
     except Exception as e:
+        if conn:
+            conn.rollback()
         logger.error(f"Password update error: {e}")
         flash("Error updating password.", "danger")
+    finally:
+        if conn:
+            release_conn(conn)
         
     return redirect(url_for("profile"))
 
@@ -459,74 +503,74 @@ def update_password():
 @role_required("admin", "superadmin")
 def admin_dashboard():
     """Admin dashboard."""
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             
-            # Get user count
             cur.execute("SELECT COUNT(*) AS user_count FROM users")
             user_count = cur.fetchone()["user_count"]
             
-            # Get recent activity (example: recent sensor data)
             cur.execute("SELECT * FROM sensordata ORDER BY datetime DESC LIMIT 5")
             recent_activity = cur.fetchall()
 
-            # --- NEW: Get alerts count ---
             cur.execute("SELECT COUNT(*) AS alerts_count FROM notifications")
             alerts_count = cur.fetchone()["alerts_count"]
             
         return render_template(
             "admin-dashboard.html",
-            user_count=user_count,        # For "Active Users" card
-            recent_activity=recent_activity, # For "Recent Activity" table
-            alerts_count=alerts_count,     # For "Alerts" card
-            
-            # Mocked data for cards that have no data source
-            reports_count=0,               # Mocked
-            active_farms=1                 # Mocked
+            user_count=user_count,
+            recent_activity=recent_activity,
+            alerts_count=alerts_count,
+            reports_count=0,
+            active_farms=1
         )
     except Exception as e:
         logger.error(f"Admin dashboard error: {e}")
         flash("Error loading admin dashboard.", "danger")
         return redirect(url_for("dashboard"))
+    finally:
+        if conn:
+            release_conn(conn)
 
 
 @app.route("/manage-users")
 @role_required("admin", "superadmin")
 def manage_users():
     """Page to manage users."""
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute("SELECT id, username, email, role FROM users")
             users = cur.fetchall()
-        # This will now work because we are creating 'manage-users.html'
         return render_template("manage-users.html", users=users)
     except Exception as e:
         logger.error(f"Manage users error: {e}")
         flash("Error loading user management page.", "danger")
         return redirect(url_for("admin_dashboard"))
+    finally:
+        if conn:
+            release_conn(conn)
 
-# --- NEW ROUTE TO FIX THE ADMIN DASHBOARD CRASH ---
 @app.route("/report")
 @login_required
 @role_required("admin", "superadmin")
 def report():
     """Admin page for viewing reports."""
-    # This is a placeholder. You can add data logic later.
     return render_template("report.html")
-# --------------------------------------------------
-
-# Note: Add routes for admin to edit/delete users (omitted for brevity)
 
 # -------------------------\
-# Sensor Data API (Mock)
+# Sensor Data API
 # -------------------------
-# These routes provide data to the frontend charts
 @app.route("/api/sensor_data")
 @login_required
 def get_sensor_data():
     """API endpoint to fetch main sensor data."""
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute("SELECT * FROM sensordata ORDER BY datetime DESC LIMIT 1")
             latest_data = cur.fetchone()
             
@@ -540,36 +584,40 @@ def get_sensor_data():
             if not latest_data4: latest_data4 = {}
             if not latest_data3: latest_data3 = {}
 
-            # Combine latest data from all tables
             combined_data = {**latest_data, **latest_data4, **latest_data3}
             
         return jsonify(combined_data)
     except Exception as e:
         logger.error(f"API sensor_data error: {e}")
         return jsonify({"error": "server error"}), 500
+    finally:
+        if conn:
+            release_conn(conn)
 
 
 @app.route("/api/chart_data")
 @login_required
 def get_chart_data():
     """API endpoint for chart history."""
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute("""
                 SELECT datetime, temperature, humidity, ammonia 
                 FROM sensordata 
                 ORDER BY datetime DESC 
                 LIMIT 50
             """)
-            # Fetchall() returns a list of dicts, which is JSON-serializable
             data = cur.fetchall()
         return jsonify(data)
     except Exception as e:
         logger.error(f"API chart_data error: {e}")
         return jsonify({"error": "server error"}), 500
+    finally:
+        if conn:
+            release_conn(conn)
 
-
-# --- FIX: ADDED MISSING API ROUTES FROM LOGS ---
 
 @app.route("/data")
 @login_required
@@ -587,225 +635,182 @@ def get_growth_data():
 @login_required
 def get_notifications_data():
     """API endpoint for notifications."""
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute("SELECT * FROM notifications ORDER BY datetime DESC LIMIT 10")
             data = cur.fetchall()
         return jsonify(data)
     except Exception as e:
         logger.error(f"API get_notifications_data error: {e}")
         return jsonify({"error": "server error"}), 500
+    finally:
+        if conn:
+            release_conn(conn)
 
 @app.route("/get_all_data6")
 @login_required
 def get_all_data6():
     """Placeholder for missing table/view."""
     logger.warning("Frontend called /get_all_data6, but no data source exists.")
-    return jsonify([]) # Return empty list to avoid breaking frontend
+    return jsonify([]) 
 
 @app.route("/get_all_data3")
 @login_required
 def get_all_data3():
     """API endpoint for weight data (sensordata3)."""
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute("SELECT * FROM sensordata3 ORDER BY datetime DESC LIMIT 20")
             data = cur.fetchall()
         return jsonify(data)
     except Exception as e:
         logger.error(f"API get_all_data3 error: {e}")
         return jsonify({"error": "server error"}), 500
+    finally:
+        if conn:
+            release_conn(conn)
 
 @app.route("/get_chickstatus_data")
 @login_required
 def get_chickstatus_data():
     """API endpoint for chick status."""
+    conn = None
     try:
-        with get_conn() as conn, conn.cursor() as cur:
+        conn = get_conn()
+        with conn.cursor() as cur:
             cur.execute("SELECT * FROM chickstatus ORDER BY datetime DESC LIMIT 20")
             data = cur.fetchall()
         return jsonify(data)
     except Exception as e:
         logger.error(f"API get_chickstatus_data error: {e}")
         return jsonify({"error": "server error"}), 500
-
-# ------------------------------------------------
+    finally:
+        if conn:
+            release_conn(conn)
 
 # -------------------------\
 # Hardware Control API
 # -------------------------
-# These routes receive POST requests (e.g., from buttons)
-# to log a control action.
+def execute_control_command(query, params):
+    """Helper function to run hardware control inserts."""
+    conn = None
+    try:
+        conn = get_conn()
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            conn.commit()
+        return True
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception(f"Control command failed: {e}")
+        return False
+    finally:
+        if conn:
+            release_conn(conn)
 
 @app.route("/toggle_light1", methods=["POST"])
 @login_required
 def toggle_light1():
-    try:
-        state = request.json.get("state", "OFF") # "ON" or "OFF"
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                """INSERT INTO sensordata (datetime, humidity, temperature, ammonia, light1, light2, exhaustfan) 
-                   VALUES (%s, 0, 0, 0, %s, 'N/A', 'N/A')""",
-                (datetime.datetime.now(), state)
-            )
-            conn.commit()
+    state = request.json.get("state", "OFF")
+    query = """INSERT INTO sensordata (datetime, humidity, temperature, ammonia, light1, light2, exhaustfan) 
+               VALUES (%s, 0, 0, 0, %s, 'N/A', 'N/A')"""
+    if execute_control_command(query, (datetime.datetime.now(), state)):
         return jsonify({"success": True, "state": state})
-    except Exception as e:
-        logger.exception("toggle_light1 failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
 @app.route("/toggle_light2", methods=["POST"])
 @login_required
 def toggle_light2():
-    try:
-        state = request.json.get("state", "OFF")
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                """INSERT INTO sensordata (datetime, humidity, temperature, ammonia, light1, light2, exhaustfan) 
-                   VALUES (%s, 0, 0, 0, 'N/A', %s, 'N/A')""",
-                (datetime.datetime.now(), state)
-            )
-            conn.commit()
+    state = request.json.get("state", "OFF")
+    query = """INSERT INTO sensordata (datetime, humidity, temperature, ammonia, light1, light2, exhaustfan) 
+               VALUES (%s, 0, 0, 0, 'N/A', %s, 'N/A')"""
+    if execute_control_command(query, (datetime.datetime.now(), state)):
         return jsonify({"success": True, "state": state})
-    except Exception as e:
-        logger.exception("toggle_light2 failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
 @app.route("/toggle_exhaust", methods=["POST"])
 @login_required
 def toggle_exhaust():
-    try:
-        state = request.json.get("state", "OFF")
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                """INSERT INTO sensordata (datetime, humidity, temperature, ammonia, light1, light2, exhaustfan) 
-                   VALUES (%s, 0, 0, 0, 'N/A', 'N/A', %s)""",
-                (datetime.datetime.now(), state)
-            )
-            conn.commit()
+    state = request.json.get("state", "OFF")
+    query = """INSERT INTO sensordata (datetime, humidity, temperature, ammonia, light1, light2, exhaustfan) 
+               VALUES (%s, 0, 0, 0, 'N/A', 'N/A', %s)"""
+    if execute_control_command(query, (datetime.datetime.now(), state)):
         return jsonify({"success": True, "state": state})
-    except Exception as e:
-        logger.exception("toggle_exhaust failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
-# Control routes for sensordata1
 @app.route("/toggle_food", methods=["POST"])
 @login_required
 def toggle_food():
-    try:
-        state = request.json.get("state", "OFF")
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO sensordata1 (datetime, food, water) VALUES (%s, %s, 'N/A')",
-                (datetime.datetime.now(), state)
-            )
-            conn.commit()
+    state = request.json.get("state", "OFF")
+    query = "INSERT INTO sensordata1 (datetime, food, water) VALUES (%s, %s, 'N/A')"
+    if execute_control_command(query, (datetime.datetime.now(), state)):
         return jsonify({"success": True, "state": state})
-    except Exception as e:
-        logger.exception("toggle_food failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
 @app.route("/toggle_water", methods=["POST"])
 @login_required
 def toggle_water():
-    try:
-        state = request.json.get("state", "OFF")
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO sensordata1 (datetime, food, water) VALUES (%s, 'N/A', %s)",
-                (datetime.datetime.now(), state)
-            )
-            conn.commit()
+    state = request.json.get("state", "OFF")
+    query = "INSERT INTO sensordata1 (datetime, food, water) VALUES (%s, 'N/A', %s)"
+    if execute_control_command(query, (datetime.datetime.now(), state)):
         return jsonify({"success": True, "state": state})
-    except Exception as e:
-        logger.exception("toggle_water failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
-# Control routes for sensordata2
 @app.route("/toggle_conveyor", methods=["POST"])
 @login_required
 def toggle_conveyor():
-    try:
-        state = request.json.get("state", "OFF")
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, 'N/A', 'N/A')",
-                (datetime.datetime.now(), state)
-            )
-            conn.commit()
+    state = request.json.get("state", "OFF")
+    query = "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, 'N/A', 'N/A')"
+    if execute_control_command(query, (datetime.datetime.now(), state)):
         return jsonify({"success": True, "state": state})
-    except Exception as e:
-        logger.exception("toggle_conveyor failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
 @app.route("/toggle_sprinkle", methods=["POST"])
 @login_required
 def toggle_sprinkle():
-    try:
-        state = request.json.get("state", "OFF")
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, 'N/A', %s, 'N/A')",
-                (datetime.datetime.now(), state)
-            )
-            conn.commit()
+    state = request.json.get("state", "OFF")
+    query = "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, 'N/A', %s, 'N/A')"
+    if execute_control_command(query, (datetime.datetime.now(), state)):
         return jsonify({"success": True, "state": state})
-    except Exception as e:
-        logger.exception("toggle_sprinkle failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
 @app.route("/toggle_uvlight", methods=["POST"])
 @login_required
 def toggle_uvlight():
-    try:
-        state = request.json.get("state", "OFF")
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, 'N/A', 'N/A', %s)",
-                (datetime.datetime.now(), state)
-            )
-            conn.commit()
+    state = request.json.get("state", "OFF")
+    query = "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, 'N/A', 'N/A', %s)"
+    if execute_control_command(query, (datetime.datetime.now(), state)):
         return jsonify({"success": True, "state": state})
-    except Exception as e:
-        logger.exception("toggle_uvlight failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
-# Mock "stop all" functions
 @app.route("/stop_conveyor", methods=["POST"])
 @login_required
 def stop_conveyor():
-    try:
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute("INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)",
-                        (datetime.datetime.now(), "OFF", "OFF", "OFF"))
+    query = "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)"
+    if execute_control_command(query, (datetime.datetime.now(), "OFF", "OFF", "OFF")):
         return jsonify({"success": True})
-    except Exception:
-        logger.exception("stop_conveyor failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
 @app.route("/stop_sprinkle", methods=["POST"])
 @login_required
 def stop_sprinkle():
-    try:
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute("INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)",
-                        (datetime.datetime.now(), "OFF", "OFF", "OFF"))
+    query = "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)"
+    if execute_control_command(query, (datetime.datetime.now(), "OFF", "OFF", "OFF")):
         return jsonify({"success": True})
-    except Exception:
-        logger.exception("stop_sprinkle failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
 @app.route("/stop_uvlight", methods=["POST"])
 @login_required
 def stop_uvlight():
-    try:
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute("INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)",
-                        (datetime.datetime.now(), "OFF", "OFF", "OFF"))
+    query = "INSERT INTO sensordata2 (datetime, conveyor, sprinkle, uvlight) VALUES (%s, %s, %s, %s)"
+    if execute_control_command(query, (datetime.datetime.now(), "OFF", "OFF", "OFF")):
         return jsonify({"success": True})
-    except Exception:
-        logger.exception("stop_uvlight failed")
-        return jsonify({"error": "server error"}), 500
+    return jsonify({"error": "server error"}), 500
 
 # -------------------------\
 # Run
