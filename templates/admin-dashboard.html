@@ -2,187 +2,120 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard | Chick Care</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | ChickCare</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <style>
-    /* Minimal custom styles for admin tab navigation */
-    .admin-tabs {
-      margin: 20px;
-    }
-    .admin-tabs ul {
-      list-style: none;
-      display: flex;
-      padding: 0;
-      margin: 0;
-      border-bottom: 2px solid #ccc;
-    }
-    .admin-tabs ul li {
-      margin-right: 20px;
-    }
-    .admin-tabs ul li a {
-      text-decoration: none;
-      color: var(--blue);
-      font-weight: bold;
-      padding: 10px;
-      display: block;
-    }
-    .admin-tabs ul li a.active {
-      border-bottom: 3px solid var(--blue);
-    }
-    .tab-content {
-      display: none;
-      padding: 20px;
-    }
-    .tab-content.active {
-      display: block;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
     <div class="navigation">
       <ul>
         <li>
-          <a href="#manageUsers" class="tab-link active">Manage Users</a>
+          <a href="{{ url_for('dashboard') }}"> <span class="icon"><i class='bx bxs-chicken'></i></span>
+            <span class="title">ChickCare</span>
+          </a>
+        </li>
+        <li class="active">
+          <a href="{{ url_for('admin_dashboard') }}">
+            <span class="icon"><i class='bx bxs-dashboard'></i></span>
+            <span class="title">Admin Dashboard</span>
+          </a>
         </li>
         <li>
-          <a href="#systemFunctions" class="tab-link">System Functions</a>
+          <a href="{{ url_for('manage_users') }}"> <span class="icon"><i class='bx bx-user'></i></span>
+            <span class="title">Manage Users</span>
+          </a>
         </li>
         <li>
-          <a href="{{ url_for('logout') }}">Sign Out</a>
+          <a href="{{ url_for('report') }}"> <span class="icon"><i class='bx bx-file'></i></span>
+            <span class="title">Reports</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('logout') }}"> <span class="icon"><i class='bx bx-log-out'></i></span>
+            <span class="title">Logout</span>
+          </a>
         </li>
       </ul>
     </div>
-
     <div class="main">
       <div class="topbar">
-        <div class="toggle">
-          <ion-icon name="menu-outline"></ion-icon>
+        <div class="toggle"><i class='bx bx-menu'></i></div>
+        <div class="title">Admin Control Panel</div>
+      </div>
+      <div class="cardBox">
+        <div class="card">
+          <div>
+            <div class="numbers">{{ user_count }}</div>
+            <div class="cardName">Active Users</div>
+          </div>
+          <div class="iconBx"><i class='bx bx-user'></i></div>
         </div>
-        <div class="datetime">
-          <span id="displayDateTime"></span>
+        <div class="card">
+          <div>
+            <div class="numbers">{{ reports_count }}</div>
+            <div class="cardName">Reports</div>
+          </div>
+          <div class="iconBx"><i class='bx bx-file'></i></div>
         </div>
-        <div class="iconn" onclick="toggleNotifi()">
-          <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt="">
-          <span id="notificationCount">0</span>
+        <div class="card">
+          <div>
+            <div class="numbers">{{ active_farms }}</div>
+            <div class="cardName">Active Farms</div>
+          </div>
+          <div class="iconBx"><i class='bx bx-home-smile'></i></div>
         </div>
-        <div class="user">
-          <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="">
+        <div class="card">
+          <div>
+            <div class="numbers">{{ alerts_count }}</div>
+            <div class="cardName">Alerts</div>
+          </div>
+          <div class="iconBx"><i class='bx bx-bell'></i></div>
         </div>
       </div>
-
-      <div class="admin-tabs">
-        <ul>
-          <li><a href="#manageUsers" class="tab-link active">Manage Users</a></li>
-          <li><a href="#systemFunctions" class="tab-link">System Functions</a></li>
-        </ul>
-      </div>
-
-      <div id="manageUsers" class="tab-content active">
-        <h1>Manage Users</h1>
-        <div id="table-users">
-          <table border="1">
+      <div class="details">
+        <div class="recentOrders">
+          <div class="cardHeader">
+            <h2>Recent Sensor Activity</h2>
+          </div>
+          <table>
             <thead>
               <tr>
-                <th>User ID</th>
-                <th>Email</th>
-                <th>Username</th>
-                <th>Actions</th>
+                <th>Date</th>
+                <th>Temperature</th>
+                <th>Humidity</th>
+                <th>Ammonia</th>
               </tr>
             </thead>
             <tbody>
-              {% for user in users %}
+              {% for activity in recent_activity %}
               <tr>
-                  <td>{{ user.id }}</td>
-                  <td>{{ user.email }}</td>
-                  <td>{{ user.username }}</td>
-                  <td>
-                      <a href="#">Edit</a> | <a href="#">Delete</a>
-                  </td>
+                <td>{{ activity.datetime.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ activity.temperature }} °C</td>
+                <td>{{ activity.humidity }} %</td>
+                <td>{{ activity.ammonia }} ppm</td>
               </tr>
               {% else %}
-              <tr><td colspan="4">No users found.</td></tr>
+              <tr>
+                <td colspan="4">No recent activity found.</td>
+              </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       </div>
-
-      <div id="systemFunctions" class="tab-content">
-        <h1>System Functions</h1>
-        <div id="table-system">
-          <table border="1">
-            <thead>
-              <tr>
-                <th>DateTime</th>
-                <th>Message</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in recent_activity %}
-              <tr>
-                  <td>{{ item.datetime.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                  <td>
-                      Sensor Update: Temp={{ item.temperature }}C, 
-                      Humidity={{ item.humidity }}%, 
-                      Ammonia={{ item.ammonia }}
-                  </td>
-              </tr>
-              {% else %}
-              <tr><td colspan="2">No recent activity found.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
     </div>
   </div>
-
-  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
   <script>
-    // JavaScript for admin tab switching
-    const tabLinks = document.querySelectorAll('.tab-link');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    tabLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        // Remove active class from all tab links and contents
-        tabLinks.forEach(link => link.classList.remove('active'));
-        tabContents.forEach(content => content.classList.remove('active'));
-
-        // Add active class to the clicked tab and its corresponding content
-        this.classList.add('active');
-        const target = this.getAttribute('href');
-        document.querySelector(target).classList.add('active');
-      });
-    });
-
-    // --- Real-time Date and Time Display ---
-    document.addEventListener('DOMContentLoaded', function() {
-        let dateTimeSpan = document.getElementById('displayDateTime'); 
-        
-        function updateDateTime() {
-            if (dateTimeSpan) {
-                const now = new Date();
-                const options = {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                };
-                dateTimeSpan.textContent = now.toLocaleString('en-US', options);
-            }
-        }
-        
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
+    // Sidebar toggle
+    const toggle = document.querySelector('.toggle');
+    const navigation = document.querySelector('.navigation');
+    const main = document.querySelector('.main');
+    toggle.addEventListener('click', () => {
+      navigation.classList.toggle('active');
+      main.classList.toggle('active');
     });
   </script>
 </body>
