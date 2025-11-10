@@ -199,7 +199,9 @@ def get_db_pool():
                 max_size=10,
                 timeout=30,
                 max_lifetime=300,
-                # ... other pool args
+                # --- THIS IS THE ONLY LINE I ADDED ---
+                kwargs={"row_factory": dict_row}
+                # ---------------------------------------
             )
             logger.info("Connection pool created.")
         except Exception as e:
@@ -212,6 +214,7 @@ def get_conn():
     pool = get_db_pool()
     if pool:
         try:
+            # This connection will now use dict_row from the pool's config
             return pool.getconn()
         except Exception as e:
             logger.error(f"Error getting connection from pool: {e}")
