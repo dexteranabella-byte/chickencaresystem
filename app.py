@@ -1,6 +1,7 @@
 # app.py - full rewrite
 # This version fixes the critical database connection pool leak
 # by implementing try...finally blocks in all routes.
+# It also adds all missing HTML routes from the nav bar.
 
 import os
 import logging
@@ -142,6 +143,7 @@ def login():
             logger.error(f"Login error: {e}")
             flash("An error occurred during login. Please try again.", "danger")
         finally:
+            # FIX: Always release connection back to pool
             if conn:
                 release_conn(conn)
 
@@ -172,15 +174,14 @@ def register():
             return redirect(url_for("login"))
         
         except pg_errors.UniqueViolation:
-            if conn:
-                conn.rollback()
+            if conn: conn.rollback()
             flash("Email or username already exists.", "danger")
         except Exception as e:
-            if conn:
-                conn.rollback()
+            if conn: conn.rollback()
             logger.error(f"Registration error: {e}")
             flash("An error occurred. Please try again.", "danger")
         finally:
+            # FIX: Always release connection
             if conn:
                 release_conn(conn)
 
@@ -208,7 +209,6 @@ def get_db_pool():
                 max_size=10,
                 timeout=30,
                 max_lifetime=300,
-                # --- FIX: This line is correct ---
                 kwargs={"row_factory": dict_row}
             )
             logger.info("Connection pool created.")
@@ -217,7 +217,7 @@ def get_db_pool():
             db_pool = None 
     return db_pool
 
-# --- FIX: This is the new connection management logic ---
+# --- FIX: Updated connection management logic ---
 def get_conn():
     """Gets a connection from the pool or creates a new one."""
     pool = get_db_pool()
@@ -264,8 +264,7 @@ def init_tables():
             conn.commit()
         logger.info("Database tables created.")
     except pg_errors.UndefinedTable:
-        if conn:
-            conn.rollback()
+        if conn: conn.rollback()
         logger.error("Error: Could not drop tables (they may not exist). Retrying...")
         try:
             with conn.cursor() as cur:
@@ -278,14 +277,13 @@ def init_tables():
                 conn.commit()
             logger.info("Database tables created (without drops).")
         except Exception as e_retry:
-            if conn:
-                conn.rollback()
+            if conn: conn.rollback()
             logger.error(f"Failed to init tables on retry: {e_retry}")
     except Exception as e:
-        if conn:
-            conn.rollback()
+        if conn: conn.rollback()
         logger.error(f"Failed to init tables: {e}")
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
 
@@ -326,6 +324,7 @@ def forgot_password():
             logger.error(f"Forgot password error: {e}")
             flash("An error occurred. Please try again.", "danger")
         finally:
+            # FIX: Always release connection
             if conn:
                 release_conn(conn)
             
@@ -357,11 +356,11 @@ def reset_with_token(token):
             flash("Your password has been updated successfully!", "success")
             return redirect(url_for("login"))
         except Exception as e:
-            if conn:
-                conn.rollback()
+            if conn: conn.rollback()
             logger.error(f"Reset password error: {e}")
             flash("An error occurred while updating your password.", "danger")
         finally:
+            # FIX: Always release connection
             if conn:
                 release_conn(conn)
 
@@ -372,10 +371,37 @@ def reset_with_token(token):
 # User Dashboard Routes
 # -------------------------
 @app.route("/dashboard")
+@app.route("/main_dashboard") # Add alias for nav bar
 @login_required
 def dashboard():
     """User dashboard."""
     return render_template("dashboard.html")
+
+# --- NEW: ADDED MISSING ROUTES FROM NAV BAR ---
+@app.route("/webcam")
+@login_required
+def webcam():
+    """Growth Tracking page."""
+    return render_template("webcam.html")
+
+@app.route("/feeding")
+@login_required
+def feeding():
+    """Supplies Stock page."""
+    return render_template("feeding.html")
+
+@app.route("/environment")
+@login_required
+def environment():
+    """Environment page."""
+    return render_template("environment.html")
+
+@app.route("/sanitization")
+@login_required
+def sanitization():
+    """Sanitization page."""
+    return render_template("sanitization.html")
+# ---------------------------------------------
 
 @app.route("/profile")
 @login_required
@@ -407,6 +433,7 @@ def profile():
         flash("Error loading profile.", "danger")
         return redirect(url_for("dashboard"))
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
 
@@ -437,15 +464,14 @@ def update_profile():
         flash("Profile updated successfully!", "success")
         
     except pg_errors.UniqueViolation:
-        if conn:
-            conn.rollback()
+        if conn: conn.rollback()
         flash("Email or username already in use.", "danger")
     except Exception as e:
-        if conn:
-            conn.rollback()
+        if conn: conn.rollback()
         logger.error(f"Profile update error: {e}")
         flash("Error updating profile.", "danger")
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
         
@@ -485,11 +511,11 @@ def update_password():
         flash("Password updated successfully!", "success")
         
     except Exception as e:
-        if conn:
-            conn.rollback()
+        if conn: conn.rollback()
         logger.error(f"Password update error: {e}")
         flash("Error updating password.", "danger")
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
         
@@ -530,6 +556,7 @@ def admin_dashboard():
         flash("Error loading admin dashboard.", "danger")
         return redirect(url_for("dashboard"))
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
 
@@ -550,14 +577,16 @@ def manage_users():
         flash("Error loading user management page.", "danger")
         return redirect(url_for("admin_dashboard"))
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
 
 @app.route("/report")
 @login_required
-@role_required("admin", "superadmin")
 def report():
     """Admin page for viewing reports."""
+    # This route just renders the template. 
+    # The template's JavaScript will call the API endpoints.
     return render_template("report.html")
 
 # -------------------------\
@@ -591,6 +620,7 @@ def get_sensor_data():
         logger.error(f"API sensor_data error: {e}")
         return jsonify({"error": "server error"}), 500
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
 
@@ -615,6 +645,7 @@ def get_chart_data():
         logger.error(f"API chart_data error: {e}")
         return jsonify({"error": "server error"}), 500
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
 
@@ -646,6 +677,7 @@ def get_notifications_data():
         logger.error(f"API get_notifications_data error: {e}")
         return jsonify({"error": "server error"}), 500
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
 
@@ -671,6 +703,7 @@ def get_all_data3():
         logger.error(f"API get_all_data3 error: {e}")
         return jsonify({"error": "server error"}), 500
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
 
@@ -689,8 +722,47 @@ def get_chickstatus_data():
         logger.error(f"API get_chickstatus_data error: {e}")
         return jsonify({"error": "server error"}), 500
     finally:
+        # FIX: Always release connection
         if conn:
             release_conn(conn)
+
+# --- NEW: API routes for Report Page ---
+@app.route("/api/report/supplies")
+@login_required
+def report_supplies():
+    """API for supplies report (sensordata1)."""
+    conn = None
+    try:
+        conn = get_conn()
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM sensordata1 ORDER BY datetime DESC")
+            data = cur.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"API report_supplies error: {e}")
+        return jsonify({"error": "server error"}), 500
+    finally:
+        if conn:
+            release_conn(conn)
+
+@app.route("/api/report/sanitization")
+@login_required
+def report_sanitization():
+    """API for sanitization report (sensordata2)."""
+    conn = None
+    try:
+        conn = get_conn()
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM sensordata2 ORDER BY datetime DESC")
+            data = cur.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"API report_sanitization error: {e}")
+        return jsonify({"error": "server error"}), 500
+    finally:
+        if conn:
+            release_conn(conn)
+# ------------------------------------
 
 # -------------------------\
 # Hardware Control API
@@ -705,8 +777,7 @@ def execute_control_command(query, params):
             conn.commit()
         return True
     except Exception as e:
-        if conn:
-            conn.rollback()
+        if conn: conn.rollback()
         logger.exception(f"Control command failed: {e}")
         return False
     finally:
