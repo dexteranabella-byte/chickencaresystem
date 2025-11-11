@@ -1,1 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit User | ChickCare</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Boxicons -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* Styles for the edit form */
+    .form-container {
+      padding: 20px;
+    }
+    .edit-form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: var(--white, #fff);
+      border-radius: 10px;
+      box-shadow: 0 7px 25px rgba(0, 0, 0, 0.08);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--black1, #333);
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--black2, #eee);
+      border-radius: 5px;
+      font-size: 1em;
+      font-family: 'Poppins', sans-serif;
+    }
+    .form-group input[readonly] {
+      background: var(--light-grey, #f9f9f9);
+      color: var(--black2, #555);
+    }
+    .btn-submit {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: var(--blue, #3b82f6);
+      color: #fff;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+    .btn-submit:hover {
+      opacity: 0.8;
+    }
+    /* Flash Messages */
+    .flash-message { padding: 10px; margin-bottom: 20px; border-radius: 5px; font-size: 14px; font-weight: 500; color: #fff; }
+    .flash-success { background-color: #10b981; border: 1px solid #047857; }
+    .flash-danger { background-color: #ef4444; border: 1px solid #b91c1c; }
+    .flash-warning { background-color: #f59e0b; border: 1px solid #d97706; }
+    .flash-info { background-color: #3b82f6; border: 1px solid #1e40af; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ======= Navigation ======= -->
+    <div class="navigation">
+      <ul>
+        <li>
+          <a href="{{ url_for('dashboard') }}">
+            <span class="icon"><i class='bx bxs-chicken'></i></span>
+            <span class="title">ChickCare</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('admin_dashboard') }}">
+            <span class="icon"><i class='bx bxs-dashboard'></i></span>
+            <span class="title">Admin Dashboard</span>
+          </a>
+        </li>
+        <li class="active">
+          <a href="{{ url_for('manage_users') }}">
+            <span class="icon"><i class='bx bx-user'></i></span>
+            <span class="title">Manage Users</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('report') }}">
+            <span class="icon"><i class='bx bx-file'></i></span>
+            <span class="title">Reports</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('logout') }}">
+            <span class="icon"><i class='bx bx-log-out'></i></span>
+            <span class="title">Logout</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <!-- ======= Main Section ======= -->
+    <div class="main">
+      <div class="topbar">
+        <div class="toggle"><i class='bx bx-menu'></i></div>
+        <div class="title">Edit User</div>
+      </div>
 
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div style="padding: 0 20px;">
+          {% for category, message in messages %}
+            <div class="flash-message {{ 'flash-' + category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+      <!-- End Flash Messages -->
+
+      <!-- ======= Edit User Form ======= -->
+      <div class="form-container">
+        <form class="edit-form" method="POST" action="{{ url_for('update_user', user_id=user.id) }}">
+          <h2>Editing User: {{ user.username }}</h2>
+          
+          <div class="form-group">
+            <label for="user_id">User ID</label>
+            <input type="text" id="user_id" name="user_id" value="{{ user.id }}" readonly>
+          </div>
+          
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" value="{{ user.username }}" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ user.email }}" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="role">Role</label>
+            
+            <!-- Security: Only superadmin can change roles -->
+            {% if session.role == 'superadmin' %}
+            <select id="role" name="role">
+              <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+              <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+            <p style="font-size: 12px; color: #555; margin-top: 5px;">You are a superadmin, so you can change this user's role.</p>
+            {% else %}
+            <!-- Regular admins can see the role but not change it -->
+            <input type="text" id="role" name="role" value="{{ user.role }}" readonly>
+            <p style="font-size: 12px; color: #555; margin-top: 5px;">Only a superadmin can change a user's role.</p>
+            {% endif %}
+            
+          </div>
+          
+          <button type="submit" class="btn-submit">Save Changes</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+  <!-- ======= Script ======= -->
+  <script>
+    // Sidebar toggle
+    const toggle = document.querySelector('.toggle');
+    const navigation = document.querySelector('.navigation');
+    const main = document.querySelector('.main');
+    toggle.addEventListener('click', () => {
+      navigation.classList.toggle('active');
+      main.classList.toggle('active');
+    });
+  </script>
+</body>
+</html>
