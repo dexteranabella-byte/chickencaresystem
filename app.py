@@ -119,7 +119,7 @@ def login():
                 session["role"] = user["role"]
                 logger.info(f"User {user['username']} (role: {user['role']}) logged in.")
                 
-                if user["role"] == "admin":
+                if user["role"] == "admin" or user["role"] == "superadmin":
                     return redirect(url_for("admin_dashboard"))
                 else:
                     return redirect(url_for("dashboard"))
