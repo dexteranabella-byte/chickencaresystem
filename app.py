@@ -378,12 +378,14 @@ def dashboard():
 
 # --- NEW: ADDED MISSING ROUTES FROM NAV BAR ---
 @app.route("/webcam")
+@app.route("/growth") # <-- NEW ALIAS for user report sidebar
 @login_required
 def webcam():
     """Growth Tracking page."""
     return render_template("webcam.html")
 
 @app.route("/feeding")
+@app.route("/feed") # <-- NEW ALIAS for user report sidebar
 @login_required
 def feeding():
     """Supplies Stock page."""
@@ -675,28 +677,35 @@ def delete_user(user_id):
     return redirect(url_for("manage_users"))
 
 
-# --- FIX: Updated /report route ---
+# --- UPDATED /report route ---
 @app.route("/report")
 @login_required
 def report():
-    """Admin page for viewing reports."""
+    """Renders the report page.
+    Shows admin content for admins, user content for users.
+    """
     conn = None
     try:
-        conn = get_conn()
-        with conn.cursor() as cur:
-            # Fetch recent activity for the report table
-            # Fetches more than the dashboard
-            cur.execute("SELECT * FROM sensordata ORDER BY datetime DESC LIMIT 20")
-            recent_activity = cur.fetchall()
-        
-        return render_template(
-            "report.html", 
-            recent_activity=recent_activity
-        )
+        # Check role and provide different data
+        if session.get("role") in ("admin", "superadmin"):
+            # Admin Report: Fetch dynamic sensor data
+            conn = get_conn()
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM sensordata ORDER BY datetime DESC LIMIT 20")
+                recent_activity = cur.fetchall()
+            return render_template("report.html", recent_activity=recent_activity)
+        else:
+            # User Report: Just render the page (it has static content)
+            return render_template("report.html")
+    
     except Exception as e:
         logger.error(f"Report page error: {e}")
         flash("Error loading report page.", "danger")
-        return redirect(url_for("admin_dashboard"))
+        # Redirect to their respective dashboard on error
+        if session.get("role") in ("admin", "superadmin"):
+            return redirect(url_for("admin_dashboard"))
+        else:
+            return redirect(url_for("dashboard"))
     finally:
         # FIX: Always release connection
         if conn:
