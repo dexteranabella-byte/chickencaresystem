@@ -379,6 +379,7 @@ def dashboard():
 # --- NEW: ADDED MISSING ROUTES FROM NAV BAR ---
 @app.route("/webcam")
 @app.route("/growth") # <-- NEW ALIAS for user report sidebar
+@app.route("/growth_monitoring") # <-- NEW ALIAS for sanitization.html sidebar
 @login_required
 def webcam():
     """Growth Tracking page."""
@@ -386,6 +387,7 @@ def webcam():
 
 @app.route("/feeding")
 @app.route("/feed") # <-- NEW ALIAS for user report sidebar
+@app.route("/feed_schedule") # <-- NEW ALIAS for sanitization.html sidebar
 @login_required
 def feeding():
     """Supplies Stock page."""
