@@ -1,7 +1,6 @@
 # app.py - full rewrite
-# This version fixes the critical database connection pool leak
-# by implementing try...finally blocks in all routes.
-# It also adds all missing HTML routes from the nav bar.
+# This version adds Edit and Delete user functionality for admins
+# and maintains all previous fixes (connection pool, all routes).
 
 import os
 import logging
@@ -581,13 +580,128 @@ def manage_users():
         if conn:
             release_conn(conn)
 
+# --- NEW: Route to show the edit user form ---
+@app.route("/edit-user/<int:user_id>", methods=["GET"])
+@role_required("admin", "superadmin")
+def edit_user(user_id):
+    """Show form to edit a user."""
+    conn = None
+    try:
+        conn = get_conn()
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, username, email, role FROM users WHERE id = %s", (user_id,))
+            user = cur.fetchone()
+        
+        if not user:
+            flash("User not found.", "danger")
+            return redirect(url_for("manage_users"))
+            
+        return render_template("edit-user.html", user=user)
+    except Exception as e:
+        logger.error(f"Edit user GET error: {e}")
+        flash("Error loading user data.", "danger")
+        return redirect(url_for("manage_users"))
+    finally:
+        if conn:
+            release_conn(conn)
+
+# --- NEW: Route to handle the edit user form submission ---
+@app.route("/edit-user/<int:user_id>", methods=["POST"])
+@role_required("admin", "superadmin")
+def update_user(user_id):
+    """Handle updating a user's data."""
+    username = request.form.get("username")
+    email = request.form.get("email")
+    role = request.form.get("role")
+    
+    conn = None
+    try:
+        conn = get_conn()
+        with conn.cursor() as cur:
+            # Only superadmin can change roles
+            if session.get("role") == "superadmin":
+                cur.execute(
+                    "UPDATE users SET username = %s, email = %s, role = %s WHERE id = %s",
+                    (username, email, role, user_id)
+                )
+            else:
+                # Regular admins can only update username and email
+                cur.execute(
+                    "UPDATE users SET username = %s, email = %s WHERE id = %s",
+                    (username, email, user_id)
+                )
+            conn.commit()
+        flash("User updated successfully.", "success")
+        
+    except pg_errors.UniqueViolation:
+        if conn: conn.rollback()
+        flash("Email already in use by another account.", "danger")
+    except Exception as e:
+        if conn: conn.rollback()
+        logger.error(f"Update user POST error: {e}")
+        flash("An error occurred while updating the user.", "danger")
+    finally:
+        if conn:
+            release_conn(conn)
+            
+    return redirect(url_for("manage_users"))
+
+# --- NEW: Route to delete a user ---
+@app.route("/delete-user/<int:user_id>", methods=["POST"])
+@role_required("admin", "superadmin")
+def delete_user(user_id):
+    """Handle deleting a user."""
+    
+    # Security check: Prevent admin from deleting themselves
+    if user_id == session.get("user_id"):
+        flash("You cannot delete your own account.", "danger")
+        return redirect(url_for("manage_users"))
+
+    conn = None
+    try:
+        conn = get_conn()
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            conn.commit()
+        flash("User deleted successfully.", "success")
+    except Exception as e:
+        if conn: conn.rollback()
+        logger.error(f"Delete user error: {e}")
+        flash("An error occurred while deleting the user.", "danger")
+    finally:
+        if conn:
+            release_conn(conn)
+            
+    return redirect(url_for("manage_users"))
+
+
+# --- FIX: Updated /report route ---
 @app.route("/report")
 @login_required
 def report():
     """Admin page for viewing reports."""
-    # This route just renders the template. 
-    # The template's JavaScript will call the API endpoints.
-    return render_template("report.html")
+    conn = None
+    try:
+        conn = get_conn()
+        with conn.cursor() as cur:
+            # Fetch recent activity for the report table
+            # Fetches more than the dashboard
+            cur.execute("SELECT * FROM sensordata ORDER BY datetime DESC LIMIT 20")
+            recent_activity = cur.fetchall()
+        
+        return render_template(
+            "report.html", 
+            recent_activity=recent_activity
+        )
+    except Exception as e:
+        logger.error(f"Report page error: {e}")
+        flash("Error loading report page.", "danger")
+        return redirect(url_for("admin_dashboard"))
+    finally:
+        # FIX: Always release connection
+        if conn:
+            release_conn(conn)
+# ------------------------------------
 
 # -------------------------\
 # Sensor Data API
