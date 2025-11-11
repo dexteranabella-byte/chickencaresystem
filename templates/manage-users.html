@@ -10,6 +10,115 @@
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <!-- NEW CSS for improved user list design -->
+  <style>
+    /* This style block improves the user list */
+    .user-list-grid {
+      display: grid;
+      /* 5 columns: ID, Username, Email, Role, Actions */
+      grid-template-columns: 0.5fr 1.5fr 2fr 1fr 1fr;
+      width: 100%;
+    }
+
+    .user-list-header {
+      font-weight: 600;
+      padding: 15px 10px;
+      border-bottom: 2px solid var(--black2, #eee); /* Use CSS var from style.css or fallback */
+      background: var(--light-grey, #f9f9f9);
+      color: var(--black1, #333);
+    }
+
+    /* This div acts as the row container */
+    .user-list-row {
+      display: contents; /* This makes its children directly part of the grid */
+    }
+
+    .user-list-row > div {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--black2, #eee);
+      display: flex;
+      align-items: center;
+      color: var(--black2, #555);
+      font-size: 14px;
+    }
+
+    .user-list-row:last-child > div {
+      border-bottom: none;
+    }
+
+    .user-list-row:hover > div {
+      background: var(--light-grey, #f9f9f9); /* Hover effect */
+    }
+    
+    /* Styled role badges */
+    .role-badge {
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-weight: 500;
+      font-size: 12px;
+      text-transform: capitalize;
+    }
+    .role-admin, .role-superadmin {
+      background-color: #fca5a5; /* Red-300 */
+      color: #b91c1c; /* Red-800 */
+    }
+    .role-user {
+      background-color: #a5f3fc; /* Cyan-200 */
+      color: #0e7490; /* Cyan-800 */
+    }
+
+    /* Action buttons */
+    .btn-edit, .btn-delete {
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      margin-right: 5px;
+      transition: opacity 0.3s;
+    }
+    .btn-edit { background: var(--blue, #3b82f6); }
+    .btn-delete { background: var(--danger, #ef4444); }
+    .btn-edit:hover, .btn-delete:hover {
+      opacity: 0.8;
+    }
+
+    /* Responsive adjustment for smaller screens */
+    @media (max-width: 768px) {
+      .user-list-grid {
+        grid-template-columns: 1fr 1fr; /* Stack into 2 columns */
+        gap: 0 10px;
+      }
+      .user-list-header {
+        display: none; /* Hide headers on mobile */
+      }
+      .user-list-row > div {
+        grid-column: span 1;
+        border-bottom: 1px solid var(--black2, #eee);
+      }
+      .user-list-row > div:nth-child(5) {
+        /* Make actions span full width */
+        grid-column: 1 / -1; 
+        padding-top: 10px;
+      }
+      .user-list-row {
+        /* Add a clear separator between users on mobile */
+        border-bottom: 2px solid var(--black1, #999);
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+      }
+      .user-list-row > div:nth-child(odd) {
+        font-weight: 600; /* Add labels */
+      }
+      .user-list-row > div:nth-child(1)::before { content: "ID: "; }
+      .user-list-row > div:nth-child(2)::before { content: "Username: "; }
+      .user-list-row > div:nth-child(3)::before { content: "Email: "; }
+      .user-list-row > div:nth-child(4)::before { content: "Role: "; }
+    }
+  </style>
+
 </head>
 <body>
   <div class="container">
@@ -61,36 +170,40 @@
           <div class="cardHeader">
             <h2>All Registered Users</h2>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Loop through users passed from the backend -->
-              {% for user in users %}
-              <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.role }}</td>
-                <td>
-                    <a href="#" class="btn-edit">Edit</a>
-                    <a href="#" class="btn-delete">Delete</a>
-                </td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="5">No users found.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          
+          <!-- IMPROVED DESIGN: Replaced <table> with CSS Grid -->
+          <div class="user-list-grid">
+            <!-- Header Row -->
+            <div class="user-list-header">ID</div>
+            <div class="user-list-header">Username</div>
+            <div class="user-list-header">Email</div>
+            <div class="user-list-header">Role</div>
+            <div class="user-list-header">Actions</div>
+
+            <!-- Data Rows (Loop) -->
+            {% for user in users %}
+            <div class="user-list-row">
+              <div>{{ user.id }}</div>
+              <div>{{ user.username }}</div>
+              <div>{{ user.email }}</div>
+              <div>
+                <!-- Styled badge for role -->
+                <span class="role-badge role-{{ user.role | lower }}">{{ user.role }}</span>
+              </div>
+              <div>
+                <a href="#" class="btn-edit">Edit</a>
+                <a href="#" class="btn-delete">Delete</a>
+              </div>
+            </div>
+            {% else %}
+            <!-- This will span all columns if no users are found -->
+            <div style="grid-column: 1 / -1; padding: 20px; text-align: center;">
+              No users found.
+            </div>
+            {% endfor %}
+          </div>
+          <!-- End of new grid design -->
+          
         </div>
       </div>
     </div>
