@@ -1,520 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Chick Care Record</title>
-    <!-- FIX: Use url_for for CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        /* Styles for the report page */
-        .attendance-container {
-            padding: 20px;
-        }
-        .filter-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: var(--white);
-            border-radius: 10px;
-            box-shadow: 0 7px 25px rgba(0, 0, 0, 0.08);
-        }
-        .filter-controls select,
-        .filter-controls input[type="text"],
-        .filter-controls input[type="date"],
-        .filter-controls button {
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid var(--black2);
-            font-size: 1em;
-        }
-        .filter-controls button {
-            background: var(--blue);
-            color: var(--white);
-            cursor: pointer;
-            border: none;
-        }
-        .filter-controls button#filterBtn {
-            background: #ff9f00;
-        }
-        .period-buttons {
-            margin-bottom: 20px;
-        }
-        .period-buttons .period-btn {
-            padding: 10px 15px;
-            margin-right: 5px;
-            border: none;
-            border-radius: 5px;
-            background: var(--light-grey);
-            cursor: pointer;
-        }
-        .period-buttons .period-btn.active {
-            background: var(--blue);
-            color: var(--white);
-        }
-        .attendance-table {
-            background: var(--white);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 7px 25px rgba(0, 0, 0, 0.08);
-            overflow-x: auto;
-        }
-        .attendance-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .attendance-table th, .attendance-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--black2);
-        }
-        .attendance-table th {
-            background: var(--light-grey);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users | ChickCare</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Boxicons -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <!-- NEW CSS for improved user list design -->
+  <style>
+    /* This style block improves the user list */
+    .user-list-grid {
+      display: grid;
+      /* 5 columns: ID, Username, Email, Role, Actions */
+      grid-template-columns: 0.5fr 1.5fr 2fr 1fr 1fr;
+      width: 100%;
+    }
+
+    .user-list-header {
+      font-weight: 600;
+      padding: 15px 10px;
+      border-bottom: 2px solid var(--black2, #eee); /* Use CSS var from style.css or fallback */
+      background: var(--light-grey, #f9f9f9);
+      color: var(--black1, #333);
+    }
+
+    /* This div acts as the row container */
+    .user-list-row {
+      display: contents; /* This makes its children directly part of the grid */
+    }
+
+    .user-list-row > div {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--black2, #eee);
+      display: flex;
+      align-items: center;
+      color: var(--black2, #555);
+      font-size: 14px;
+    }
+
+    .user-list-row:last-child > div {
+      border-bottom: none;
+    }
+
+    .user-list-row:hover > div {
+      background: var(--light-grey, #f9f9f9); /* Hover effect */
+    }
+    
+    /* Styled role badges */
+    .role-badge {
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-weight: 500;
+      font-size: 12px;
+      text-transform: capitalize;
+    }
+    .role-admin, .role-superadmin {
+      background-color: #fca5a5; /* Red-300 */
+      color: #b91c1c; /* Red-800 */
+    }
+    .role-user {
+      background-color: #a5f3fc; /* Cyan-200 */
+      color: #0e7490; /* Cyan-800 */
+    }
+
+    /* Action buttons */
+    .btn-edit, .btn-delete {
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      margin-right: 5px;
+      transition: opacity 0.3s;
+    }
+    .btn-edit { background: var(--blue, #3b82f6); }
+    .btn-delete { background: var(--danger, #ef4444); }
+    .btn-edit:hover, .btn-delete:hover {
+      opacity: 0.8;
+    }
+
+    /* Responsive adjustment for smaller screens */
+    @media (max-width: 768px) {
+      .user-list-grid {
+        grid-template-columns: 1fr 1fr; /* Stack into 2 columns */
+        gap: 0 10px;
+      }
+      .user-list-header {
+        display: none; /* Hide headers on mobile */
+      }
+      .user-list-row > div {
+        grid-column: span 1;
+        border-bottom: 1px solid var(--black2, #eee);
+      }
+      .user-list-row > div:nth-child(5) {
+        /* Make actions span full width */
+        grid-column: 1 / -1; 
+        padding-top: 10px;
+      }
+      .user-list-row {
+        /* Add a clear separator between users on mobile */
+        border-bottom: 2px solid var(--black1, #999);
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+      }
+      .user-list-row > div:nth-child(odd) {
+        font-weight: 600; /* Add labels */
+      }
+      .user-list-row > div:nth-child(1)::before { content: "ID: "; }
+      .user-list-row > div:nth-child(2)::before { content: "Username: "; }
+      .user-list-row > div:nth-child(3)::before { content: "Email: "; }
+      .user-list-row > div:nth-child(4)::before { content: "Role: "; }
+    }
+  </style>
+
 </head>
 <body>
-
-    <div class="container">
-        <div class="navigation">
-            <ul>
-                <li>
-                    <a href="#">
-                        <span class="icon">
-                            <!-- FIX: Use url_for for images -->
-                            <img src="{{ url_for('static', filename='imgs/CC.png') }}">
-                        </span>
-                        <span class="title1">Chick Care</span>
-                    </a>
-                </li>
-                <li>
-                    <!-- FIX: Use url_for for links -->
-                    <a href="{{ url_for('dashboard') }}">
-                        <span class="icon">
-                            <ion-icon name="reorder-four-outline"></ion-icon>
-                        </span>
-                        <span class="title">Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('webcam') }}">
-                        <span class="icon">
-                            <ion-icon name="stats-chart-outline"></ion-icon>
-                        </span>
-                        <span class="title">Growth Tracking</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('feeding') }}">
-                        <span class="icon">
-                            <ion-icon name="layers-outline"></ion-icon>
-                        </span>
-                        <span class="title">Supplies Stock</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('environment') }}">
-                        <span class="icon">
-                            <ion-icon name="cloudy-outline"></ion-icon>
-                        </span>
-                        <span class="title">Environment</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('dashboard') }}">
-                        <span class="icon">
-                            <ion-icon name="notifications-circle-outline"></ion-icon>
-                        </span>
-                        <span class="title">Notifications</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('sanitization') }}">
-                        <span class="icon">
-                            <ion-icon name="water-outline"></ion-icon>
-                        </span>
-                        <span class="title">Sanitization</span>
-                    </a>
-                </li>
-
-                <!-- FIX: Check for 'admin' OR 'superadmin' -->
-                {% if session['role'] == 'admin' or session['role'] == 'superadmin' %}
-                <li>
-                    <a href="{{ url_for('manage_users') }}">
-                        <span class="icon">
-                            <ion-icon name="people-outline"></ion-icon>
-                        </span>
-                        <span class="title">Manage Users</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                <li class="active"> <!-- FIX: Set this page as active -->
-                    <a href="{{ url_for('report') }}">
-                        <span class="icon">
-                            <ion-icon name="file-tray-stacked-outline"></ion-icon>
-                        </span>
-                        <span class="title">Report</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('logout') }}">
-                        <span class="icon">
-                            <ion-icon name="log-out-outline"></ion-icon>
-                        </span>
-                        <span class="title">Sign Out</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <div class="main">
-            <div class="topbar">
-                <div class="toggle">
-                    <ion-icon name="menu-outline"></ion-icon>
-                </div>
-                <div class="datetime">
-                    <span id="displayDateTime"></span>
-                </div>
-                <div class="iconn" onclick="toggleNotifi()">
-                    <!-- FIX: Use url_for for images -->
-                    <img src="{{ url_for('static', filename='imgs/bell.png') }}" alt=""> <span id="notificationCount">0</span>
-                </div>
-                <div class="notifi-box" id="box">
-                    <h2>Notifications <span id="notificationCount1">0</span></h2>
-                    <div class="notifi-item">
-                        <div class="text" id="notificationItems">
-                        </div>
-                    </div>
-                </div>
-                <div class="user">
-                    <img src="{{ url_for('static', filename='imgs/admin.jpg') }}" alt="">
-                </div>
-            </div>
-
-            <div class="attendance-container">
-                <h1>CHICK CARE RECORD</h1>
-
-                <div class="filter-controls">
-                    <select id="recordType">
-                        <option value="growth">Growth Tracking (ChickStatus)</option>
-                        <option value="growth1">Growth Tracking (Weight)</option>
-                        <option value="environment">Environment</option>
-                        <option value="supplies">Supplies Stocks</option>
-                        <option value="notifications">Notifications</option>
-                        <option value="sanitization">Sanitization</option>
-                    </select>
-                    <input type="text" id="searchField" placeholder="Search">
-                    <button id="searchBtn">Enter</button>
-                    <label for="dateFrom">From:</label>
-                    <input type="date" id="dateFrom" value="2025-07-04">
-                    <label for="dateTo">To:</label>
-                    <input type="date" id="dateTo" value="2025-08-18">
-                    <button id="filterBtn" title="Apply Filters">
-                        <ion-icon name="funnel-outline"></ion-icon>
-                    </button>
-                </div>
-                <div class="period-buttons">
-                    <button id="btnDaily" class="period-btn active">Daily</button>
-                    <button id="btnWeekly" class="period-btn">Weekly</button>
-                    <button id="btnMonthly" class="period-btn">Monthly</button>
-                </div>
-
-                <!-- Growth (Status) Table -->
-                <div class="attendance-table" id="tableGrowth">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>DateTime</th>
-                                <th>ChickNumber</th>
-                                <th>Status (Healthy/Sick)</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                
-                <!-- Growth (Weight) Table -->
-                <div class="attendance-table" id="tableGrowth1" style="display:none">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>DateTime</th>
-                                <th>ChickNumber</th>
-                                <th>Weight</th>
-                                <th>WeighingCount</th>
-                                <th>AverageWeight</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- Environment Table -->
-                <div class="attendance-table" id="tableEnvironment" style="display:none">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>DateTime</th>
-                                <th>Humidity</th>
-                                <th>Temperature</th>
-                                <th>Light1</th>
-                                <th>Light2</th>
-                                <th>Ammonia</th>
-                                <th>ExhaustFan</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                
-                <!-- Supplies Table -->
-                <div class="attendance-table" id="tableSupplies" style="display:none">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>DateTime</th>
-                                <th>Food</th>
-                                <th>Water</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- Notifications Table -->
-                <div class="attendance-table" id="tableNotifications" style="display:none">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>DateTime</th>
-                                <th>Message</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- Sanitization Table -->
-                <div class="attendance-table" id="tableSanitization" style="display:none">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>DateTime</th>
-                                <th>Conveyor</th>
-                                <th>Sprinkle</th>
-                                <th>UVLight</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
+  <div class="container">
+    <!-- ======= Navigation ======= -->
+    <div class="navigation">
+      <ul>
+        <li>
+          <a href="{{ url_for('dashboard') }}">
+            <span class="icon"><i class='bx bxs-chicken'></i></span>
+            <span class="title">ChickCare</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('admin_dashboard') }}">
+            <span class="icon"><i class='bx bxs-dashboard'></i></span>
+            <span class="title">Admin Dashboard</span>
+          </a>
+        </li>
+        <li class="active">
+          <a href="{{ url_for('manage_users') }}">
+            <span class="icon"><i class='bx bx-user'></i></span>
+            <span class="title">Manage Users</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('report') }}">
+            <span class="icon"><i class='bx bx-file'></i></span>
+            <span class="title">Reports</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('logout') }}">
+            <span class="icon"><i class='bx bx-log-out'></i></span>
+            <span class="title">Logout</span>
+          </a>
+        </li>
+      </ul>
     </div>
+    <!-- ======= Main Section ======= -->
+    <div class="main">
+      <div class="topbar">
+        <div class="toggle"><i class='bx bx-menu'></i></div>
+        <div class="title">Manage Users</div>
+      </div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script type(="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js")></script>
-    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+      <!-- ======= User List Table ======= -->
+      <div class="details">
+        <div class="recentOrders">
+          <div class="cardHeader">
+            <h2>All Registered Users</h2>
+          </div>
+          
+          <!-- IMPROVED DESIGN: Replaced <table> with CSS Grid -->
+          <div class="user-list-grid">
+            <!-- Header Row -->
+            <div class="user-list-header">ID</div>
+            <div class="user-list-header">Username</div>
+            <div class="user-list-header">Email</div>
+            <div class="user-list-header">Role</div>
+            <div class="user-list-header">Actions</div>
 
-    <!-- NEW: JavaScript to make the page interactive -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const recordType = document.getElementById('recordType');
-            const searchField = document.getElementById('searchField');
-            const searchBtn = document.getElementById('searchBtn');
-            const filterBtn = document.getElementById('filterBtn');
-            const dateFrom = document.getElementById('dateFrom');
-            const dateTo = document.getElementById('dateTo');
-            const periodBtns = document.querySelectorAll('.period-btn');
-            
-            const tables = {
-                growth: document.getElementById('tableGrowth'),
-                growth1: document.getElementById('tableGrowth1'),
-                environment: document.getElementById('tableEnvironment'),
-                supplies: document.getElementById('tableSupplies'),
-                notifications: document.getElementById('tableNotifications'),
-                sanitization: document.getElementById('tableSanitization')
-            };
-
-            const apiEndpoints = {
-                growth: "{{ url_for('get_chickstatus_data') }}",
-                growth1: "{{ url_for('get_all_data3') }}",
-                environment: "{{ url_for('get_growth_data') }}", // Uses sensordata
-                supplies: "{{ url_for('report_supplies') }}", // New API
-                notifications: "{{ url_for('get_notifications_data') }}",
-                sanitization: "{{ url_for('report_sanitization') }}" // New API
-            };
-
-            function hideAllTables() {
-                Object.values(tables).forEach(table => table.style.display = 'none');
-            }
-
-            function showTable(type) {
-                hideAllTables();
-                if (tables[type]) {
-                    tables[type].style.display = 'block';
-                }
-            }
-
-            function formatDateTime(isoString) {
-                if (!isoString) return 'N/A';
-                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-                return new Date(isoString).toLocaleString('en-US', options);
-            }
-
-            // Function to render data into the correct table
-            function renderTable(type, data) {
-                const tableBody = tables[type].querySelector('tbody');
-                tableBody.innerHTML = ''; // Clear existing data
-
-                if (data.length === 0) {
-                    const colSpan = tables[type].querySelector('thead th').length;
-                    tableBody.innerHTML = `<tr><td colspan="${colSpan}">No data found.</td></tr>`;
-                    return;
-                }
-
-                data.forEach(row => {
-                    let tr = '<tr>';
-                    const dt = formatDateTime(row.datetime);
-                    
-                    switch (type) {
-                        case 'growth':
-                            tr += `<td>${dt}</td><td>${row.chicknumber || 'N/A'}</td><td>${row.status || 'N/A'}</td>`;
-                            break;
-                        case 'growth1':
-                            tr += `<td>${dt}</td><td>${row.chicknumber || 'N/A'}</td><td>${row.weight || 0}</td><td>${row.weighingcount || 0}</td><td>${row.averageweight || 0}</td>`;
-                            break;
-                        case 'environment':
-                            tr += `<td>${dt}</td><td>${row.humidity || 0}</td><td>${row.temperature || 0}</td><td>${row.light1 || 'N/A'}</td><td>${row.light2 || 'N/A'}</td><td>${row.ammonia || 0}</td><td>${row.exhaustfan || 'N/A'}</td>`;
-                            break;
-                        case 'supplies':
-                            tr += `<td>${dt}</td><td>${row.food || 'N/A'}</td><td>${row.water || 'N/A'}</td>`;
-                            break;
-                        case 'notifications':
-                            tr += `<td>${dt}</td><td>${row.message || 'No message'}</td>`;
-                            break;
-                        case 'sanitization':
-                            tr += `<td>${dt}</td><td>${row.conveyor || 'N/A'}</td><td>${row.sprinkle || 'N/A'}</td><td>${row.uvlight || 'N/A'}</td>`;
-                            break;
-                    }
-                    tr += '</tr>';
-                    tableBody.innerHTML += tr;
-                });
-            }
-
-            // Function to fetch and display data
-            async function loadData() {
-                const type = recordType.value;
-                const url = apiEndpoints[type];
-                
-                // Get filter values
-                const from = dateFrom.value;
-                const to = dateTo.value;
-                const search = searchField.value.toLowerCase();
-
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    let data = await response.json();
-
-                    // 1. Filter by Date
-                    if (from && to) {
-                        data = data.filter(row => {
-                            const rowDate = new Date(row.datetime).toISOString().split('T')[0];
-                            return rowDate >= from && rowDate <= to;
-                        });
-                    }
-                    
-                    // 2. Filter by Search Term
-                    if (search) {
-                        data = data.filter(row => {
-                            // Check all string values in the row for the search term
-                            return Object.values(row).some(val => 
-                                String(val).toLowerCase().includes(search)
-                            );
-                        });
-                    }
-
-                    showTable(type);
-                    renderTable(type, data);
-
-                } catch (error) {
-                    console.error('Failed to fetch data:', error);
-                    const tableBody = tables[type].querySelector('tbody');
-                    const colSpan = tables[type].querySelector('thead th').length;
-                    tableBody.innerHTML = `<tr><td colspan="${colSpan}">Error loading data.</td></tr>`;
-                }
-            }
-
-            // --- Event Listeners ---
-            recordType.addEventListener('change', loadData);
-            filterBtn.addEventListener('click', loadData);
-            searchBtn.addEventListener('click', loadData);
-            searchField.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    loadData();
-                }
-            });
-
-            periodBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    periodBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const now = new Date();
-                    let fromDate = new Date();
-                    
-                    if (this.id === 'btnDaily') {
-                        // 'from' date is today
-                        fromDate = now;
-                    } else if (this.id === 'btnWeekly') {
-                        // 'from' date is 7 days ago
-                        fromDate.setDate(now.getDate() - 7);
-                    } else if (this.id === 'btnMonthly') {
-                        // 'from' date is 30 days ago
-                        fromDate.setDate(now.getDate() - 30);
-                    }
-                    
-                    // Set date inputs (YYYY-MM-DD)
-                    dateFrom.value = fromDate.toISOString().split('T')[0];
-                    dateTo.value = now.toISOString().split('T')[0];
-                    
-                    // Reload data
-                    loadData();
-                });
-            });
-
-            // --- Initial Load ---
-            showTable(recordType.value);
-            loadData(); // Load data for the default selected table
-        });
-
-        // --- Datetime for top bar ---
-        document.addEventListener('DOMContentLoaded', function() {
-            let dateTimeSpan = document.getElementById('displayDateTime'); 
-            if (dateTimeSpan) {
-                function updateDateTime() {
-                    const now = new Date();
-                    const options = {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit'
-                    };
-                    dateTimeSpan.textContent = now.toLocaleString('en-US', options);
-                }
-                updateDateTime();
-                setInterval(updateDateTime, 1000);
-            }
-        });
-    </script>
-
+            <!-- Data Rows (Loop) -->
+            {% for user in users %}
+            <div class="user-list-row">
+              <div>{{ user.id }}</div>
+              <div>{{ user.username }}</div>
+              <div>{{ user.email }}</div>
+              <div>
+                <!-- Styled badge for role -->
+                <span class="role-badge role-{{ user.role | lower }}">{{ user.role }}</span>
+              </div>
+              <div>
+                <a href="#" class="btn-edit">Edit</a>
+                <a href="#" class="btn-delete">Delete</a>
+              </div>
+            </div>
+            {% else %}
+            <!-- This will span all columns if no users are found -->
+            <div style="grid-column: 1 / -1; padding: 20px; text-align: center;">
+              No users found.
+            </div>
+            {% endfor %}
+          </div>
+          <!-- End of new grid design -->
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ======= Script ======= -->
+  <script>
+    // Sidebar toggle
+    const toggle = document.querySelector('.toggle');
+    const navigation = document.querySelector('.navigation');
+    const main = document.querySelector('.main');
+    toggle.addEventListener('click', () => {
+      navigation.classList.toggle('active');
+      main.classList.toggle('active');
+    });
+  </script>
 </body>
 </html>
