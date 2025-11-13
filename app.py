@@ -38,6 +38,9 @@ except ImportError:
 # Use real environment variables in production
 app.secret_key = os.environ.get("SECRET_KEY", "change_me_for_prod_a9sd8f7a9s8df")
 DB_URL_RAW = os.environ.get("DATABASE_URL", "postgresql://user:pass@localhost/db")
+# Restoring environment variables as requested
+MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1")
 
 # --- Superadmin fallback ---
