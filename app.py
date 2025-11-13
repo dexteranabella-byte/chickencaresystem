@@ -1,17 +1,18 @@
 # app.py
 #
-# This is the complete, final, and correct version of your application.
-# It includes ALL fixes:
+# This version removes all SMTP (flask_mail) and password reset
+# functionality, as requested.
+#
+# It includes all other fixes:
 # 1. Routes for ALL 16 form/template pages.
 # 2. Correct database connection pooling for stable connections.
 # 3. Fixed logic for /stop_conveyor, /stop_sprinkle, /stop_uvlight.
 # 4. Added placeholder /get_all_data6 to remove frontend errors.
 # 5. Full user management (add, edit, delete) with security checks.
-# 6. Password reset functionality.
-# 7. Correct template filenames (main-dashboard.html, manage-users.html).
-# 8. Moved init_db_pool() to the global scope to ensure it runs
+# 6. Correct template filenames (main-dashboard.html, manage-users.html).
+# 7. Moved init_db_pool() to the global scope to ensure it runs
 #    when Gunicorn starts. This fixes "Connection pool is not initialized".
-# 9. Added redirect routes for /sanitization and /report to fix 404 errors.
+# 8. Added redirect routes for /sanitization and /report to fix 404 errors.
 #
 
 import os
@@ -20,8 +21,7 @@ import datetime
 from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_mail import Mail, Message
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+# Removed flask_mail and itsdangerous imports
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import psycopg
@@ -45,8 +45,7 @@ logger = app.logger
 # Environment / secrets
 app.secret_key = os.environ.get("SECRET_KEY", "change_me_for_prod")
 DB_URL_RAW = os.environ.get("DATABASE_URL", "postgresql://user:pass@localhost/db")
-MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+# Removed MAIL and SMTP env variables
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1")
 
 # Superadmin fallback
@@ -55,17 +54,7 @@ SUPERADMIN_PASS_RAW = os.environ.get("SUPERADMIN_PASS", "superadminpass")
 SUPERADMIN_PASS_HASH = generate_password_hash(SUPERADMIN_PASS_RAW)
 SUPERADMIN_EMAIL = os.environ.get("SUPERADMIN_EMAIL", "admin@example.com")
 
-# Mail config
-app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", 587))
-app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "True").lower() == "true"
-app.config["MAIL_USE_SSL"] = os.environ.get("MAIL_USE_SSL", "False").lower() == "true"
-app.config["MAIL_USERNAME"] = MAIL_USERNAME
-app.config["MAIL_PASSWORD"] = SMTP_PASSWORD
-app.config["MAIL_DEFAULT_SENDER"] = MAIL_USERNAME
-
-mail = Mail(app)
-s = URLSafeTimedSerializer(app.secret_key)
+# Removed Mail config section
 
 # -------------------------
 # DB Connection Pool
@@ -529,82 +518,23 @@ def delete_user(user_id):
     return redirect(url_for("user_management"))
 
 # -------------------------
-# Password Reset
+# Password Reset (REMOVED)
 # -------------------------
-@app.route("/forgot_password", methods=["GET", "POST"])
+# @app.route("/forgot_password", ...) and
+# @app.route("/reset_password/<token>", ...)
+# have been removed as requested.
+
+# Renders 'forgot_password.html'
+@app.route("/forgot_password", methods=["GET"])
 def forgot_password():
-    if request.method == "POST":
-        email = request.form["email"]
-        conn = None
-        try:
-            conn = get_db_conn()
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-                user = cur.fetchone()
-            if not user:
-                flash("Email address not found.", "warning")
-                return render_template("forgot_password.html")
-            token = s.dumps(email, salt="password-reset-salt")
-            reset_url = url_for("reset_password", token=token, _external=True)
-            with conn.cursor() as cur:
-                cur.execute("UPDATE users SET reset_token = %s WHERE email = %s", (token, email))
-            conn.commit()
-            msg = Message("Password Reset Request", recipients=[email])
-            msg.body = f"Click the link to reset your password: {reset_url}\n\nIf you did not request this, please ignore this email."
-            mail.send(msg)
-            flash("A password reset link has been sent to your email.", "success")
-            return redirect(url_for("login"))
-        except Exception as e:
-            logger.error(f"Error in forgot_password for {email}: {e}")
-            if conn: conn.rollback()
-            flash("An error occurred. Please try again.", "danger")
-        finally:
-            if conn:
-                put_db_conn(conn)
-    # Renders 'forgot_password.html'
+    # Renders the page, but functionality is disabled.
+    # You can add a message to the template if you like.
     return render_template("forgot_password.html")
 
-@app.route("/reset_password/<token>", methods=["GET", "POST"])
+# Renders 'reset_password.html'
+@app.route("/reset_password/<token>", methods=["GET"])
 def reset_password(token):
-    try:
-        email = s.loads(token, salt="password-reset-salt", max_age=3600)
-    except (SignatureExpired, BadSignature):
-        flash("Invalid or expired password reset link.", "danger")
-        return redirect(url_for("forgot_password"))
-
-    conn = None
-    try:
-        conn = get_db_conn()
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT reset_token FROM users WHERE email = %s", (email,))
-            user = cur.fetchone()
-        if not user or user["reset_token"] != token:
-            flash("Invalid or already used reset link.", "danger")
-            return redirect(url_for("forgot_password"))
-
-        if request.method == "POST":
-            password = request.form["password"]
-            if password != request.form["password_confirm"]:
-                flash("Passwords do not match.", "danger")
-                return render_template("reset_password.html", token=token)
-            
-            hashed_password = generate_password_hash(password)
-            with conn.cursor() as cur:
-                cur.execute(
-                    "UPDATE users SET password = %s, reset_token = NULL WHERE email = %s",
-                    (hashed_password, email),
-                )
-            conn.commit()
-            flash("Password reset successful! Please log in.", "success")
-            return redirect(url_for("login"))
-    except Exception as e:
-        logger.error(f"Error in reset_password for {email}: {e}")
-        if conn: conn.rollback()
-        flash("An error occurred. Please try again.", "danger")
-    finally:
-        if conn:
-            put_db_conn(conn)
-    # Renders 'reset_password.html'
+    # Renders the page, but functionality is disabled.
     return render_template("reset_password.html", token=token)
 
 # -------------------------
