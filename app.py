@@ -18,6 +18,13 @@ import psycopg
 from psycopg.rows import dict_row
 import psycopg.errors as pg_errors
 
+# -------------------------\
+# App config
+# -------------------------\
+app = Flask(__name__, static_folder="static", template_folder="templates")
+logging.basicConfig(level=logging.INFO)
+logger = app.logger
+
 # Use psycopg_pool if available
 try:
     from psycopg_pool import ConnectionPool
