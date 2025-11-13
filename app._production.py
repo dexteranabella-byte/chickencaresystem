@@ -1,13 +1,14 @@
 # app_production.py
 #
-# This is the complete, final version of your application.
+# This is the complete, final, and correct version of your application.
 # It includes ALL fixes:
-# 1. Routes for ALL form/template pages (feed, environment, etc.).
+# 1. Routes for ALL 16 form/template pages.
 # 2. Correct database connection pooling for stable connections.
 # 3. Fixed logic for /stop_conveyor, /stop_sprinkle, /stop_uvlight.
 # 4. Added placeholder /get_all_data6 to remove frontend errors.
 # 5. Full user management (add, edit, delete) with security checks.
 # 6. Password reset functionality.
+# 7. Correct template filenames (main-dashboard.html, manage-users.html).
 #
 
 import os
@@ -298,14 +299,20 @@ def profile():
 @app.route("/main_dashboard")
 @login_required
 def main_dashboard():
-    # Renders 'index.html' (your main dashboard)
-    return render_template("index.html", username=session.get("username"))
+    # Renders 'main-dashboard.html'
+    return render_template("main-dashboard.html", username=session.get("username"))
 
 @app.route("/admin_dashboard")
 @admin_required
 def admin_dashboard():
     # Renders 'admin-dashboard.html'
     return render_template("admin-dashboard.html")
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    # Renders 'dashboard.html'
+    return render_template("dashboard.html")
 
 @app.route("/environment_controls")
 @login_required
@@ -369,7 +376,7 @@ def user_management():
         if conn:
             put_db_conn(conn)
     # Renders 'manage-users.html'
-    return render_template("user_management.html", users=users, current_user_role=session.get("role"))
+    return render_template("manage-users.html", users=users, current_user_role=session.get("role"))
 
 @app.route("/add_user", methods=["POST"])
 @admin_required
@@ -409,48 +416,64 @@ def add_user():
             put_db_conn(conn)
     return redirect(url_for("user_management"))
 
-@app.route("/edit_user/<int:user_id>", methods=["POST"])
+@app.route("/edit_user/<int:user_id>", methods=["GET", "POST"])
 @admin_required
 def edit_user(user_id):
-    # This POST request handles logic for 'edit-user.html'
-    email = request.form.get("email")
-    username = request.form.get("username")
-    role = request.form.get("role")
+    if request.method == "POST":
+        # This is the logic for processing the form
+        email = request.form.get("email")
+        username = request.form.get("username")
+        role = request.form.get("role")
 
-    if not all([email, username, role]):
-        flash("Email, username, and role are required.", "danger")
+        if not all([email, username, role]):
+            flash("Email, username, and role are required.", "danger")
+            return redirect(url_for("user_management"))
+        
+        if role == "admin" and session.get("role") != "superadmin":
+            flash("You do not have permission to edit admin users.", "danger")
+            return redirect(url_for("user_management"))
+
+        conn = None
+        try:
+            conn = get_db_conn()
+            with conn.cursor() as cur:
+                cur.execute("SELECT role FROM users WHERE id = %s", (user_id,))
+                target_user = cur.fetchone()
+                if target_user and target_user[0] == 'superadmin':
+                    flash("Cannot edit a superadmin user.", "danger")
+                else:
+                    cur.execute(
+                        "UPDATE users SET email = %s, username = %s, role = %s WHERE id = %s",
+                        (email, username, role, user_id)
+                    )
+                    conn.commit()
+                    flash("User updated successfully.", "success")
+        except pg_errors.UniqueViolation:
+            if conn: conn.rollback()
+            flash("Email or username already exists for another user.", "danger")
+        except Exception as e:
+            if conn: conn.rollback()
+            logger.error(f"Error editing user {user_id}: {e}")
+            flash("An error occurred while editing the user.", "danger")
+        finally:
+            if conn:
+                put_db_conn(conn)
+        # On POST success or fail, redirect back to the main list
+        return redirect(url_for("user_management"))
+
+    # This is the logic for GET requests
+    # Fetch the user's data to pre-fill the form
+    user_to_edit = get_user_by_id(user_id)
+    if not user_to_edit:
+        flash("User not found.", "danger")
         return redirect(url_for("user_management"))
     
-    if role == "admin" and session.get("role") != "superadmin":
-        flash("You do not have permission to edit admin users.", "danger")
-        return redirect(url_for("user_management"))
+    if user_to_edit['role'] == 'superadmin':
+            flash("Cannot edit a superadmin user.", "danger")
+            return redirect(url_for("user_management"))
 
-    conn = None
-    try:
-        conn = get_db_conn()
-        with conn.cursor() as cur:
-            cur.execute("SELECT role FROM users WHERE id = %s", (user_id,))
-            target_user = cur.fetchone()
-            if target_user and target_user[0] == 'superadmin':
-                flash("Cannot edit a superadmin user.", "danger")
-            else:
-                cur.execute(
-                    "UPDATE users SET email = %s, username = %s, role = %s WHERE id = %s",
-                    (email, username, role, user_id)
-                )
-                conn.commit()
-                flash("User updated successfully.", "success")
-    except pg_errors.UniqueViolation:
-        if conn: conn.rollback()
-        flash("Email or username already exists for another user.", "danger")
-    except Exception as e:
-        if conn: conn.rollback()
-        logger.error(f"Error editing user {user_id}: {e}")
-        flash("An error occurred while editing the user.", "danger")
-    finally:
-        if conn:
-            put_db_conn(conn)
-    return redirect(url_for("user_management"))
+    # Renders 'edit-user.html'
+    return render_template("edit-user.html", user=user_to_edit)
 
 @app.route("/delete_user/<int:user_id>", methods=["POST"])
 @admin_required
@@ -513,6 +536,7 @@ def forgot_password():
         finally:
             if conn:
                 put_db_conn(conn)
+    # Renders 'reset_password.html'
     return render_template("forgot_password.html")
 
 @app.route("/reset_password/<token>", methods=["GET", "POST"])
