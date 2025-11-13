@@ -1,4 +1,4 @@
-# app_production.py
+# app.py
 #
 # This is the complete, final, and correct version of your application.
 # It includes ALL fixes:
@@ -536,7 +536,7 @@ def forgot_password():
         finally:
             if conn:
                 put_db_conn(conn)
-    # Renders 'reset_password.html'
+    # Renders 'forgot_password.html'
     return render_template("forgot_password.html")
 
 @app.route("/reset_password/<token>", methods=["GET", "POST"])
@@ -579,6 +579,7 @@ def reset_password(token):
     finally:
         if conn:
             put_db_conn(conn)
+    # Renders 'reset_password.html'
     return render_template("reset_password.html", token=token)
 
 # -------------------------
