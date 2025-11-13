@@ -9,6 +9,9 @@
 # 5. Full user management (add, edit, delete) with security checks.
 # 6. Password reset functionality.
 # 7. Correct template filenames (main-dashboard.html, manage-users.html).
+# 8. Moved init_db_pool() to the global scope to ensure it runs
+#    when Gunicorn starts. This fixes "Connection pool is not initialized".
+# 9. Added redirect routes for /sanitization and /report to fix 404 errors.
 #
 
 import os
@@ -69,6 +72,8 @@ s = URLSafeTimedSerializer(app.secret_key)
 # -------------------------
 db_pool = None
 
+# ---- FIX: Initialize the pool when the app is imported ----
+# This ensures Gunicorn workers will have an initialized pool.
 def init_db_pool():
     global db_pool
     if ConnectionPool is None:
@@ -110,6 +115,10 @@ def on_boot(server):
 
 def on_exit(server):
     close_db_pool()
+
+# ---- NEW: Call init_db_pool() immediately ----
+init_db_pool()
+# ----------------------------------------------------
 
 # -------------------------
 # Auth / Helpers
@@ -290,6 +299,22 @@ def profile():
         flash("Could not find user data.", "danger")
         return redirect(url_for("main_dashboard"))
     return render_template("profile.html", user=user)
+
+# ------------------------------------------------
+# NEW SECTION: REDIRECTS FOR 404 ERRORS
+# ------------------------------------------------
+
+@app.route("/sanitization")
+@login_required
+def redirect_sanitization():
+    # Fixes 404 error for /sanitization
+    return redirect(url_for("sanitization_controls"))
+
+@app.route("/report")
+@login_required
+def redirect_report():
+    # Fixes 404 error for /report
+    return redirect(url_for("reports"))
 
 # ------------------------------------------------
 # SECTION: ROUTES FOR ALL TEMPLATE PAGES
@@ -741,12 +766,7 @@ def stop_uvlight():
 # -------------------------
 # Run
 # -------------------------
-if __name__ == "__GUNICORN__":
-    gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
-    app.logger.info("Gunicorn worker booted, initializing DB pool.")
-    init_db_pool()
-elif __name__ == "__main__":
-    init_db_pool()
+if __name__ == "__main__":
+    # This block now only runs for local testing (e.g., python app.py)
+    # Gunicorn will import the file and run init_db_pool() automatically.
     app.run(host="0.0.0.0", port=10000, debug=DEBUG)
