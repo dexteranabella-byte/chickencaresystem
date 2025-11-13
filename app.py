@@ -21,6 +21,7 @@ import psycopg.errors as pg_errors
 # -------------------------\
 # App config
 # -------------------------\
+# Define app and logger here so they are available for the pool import log
 app = Flask(__name__, static_folder="static", template_folder="templates")
 logging.basicConfig(level=logging.INFO)
 logger = app.logger
@@ -32,13 +33,6 @@ try:
 except ImportError:
     ConnectionPool = None
     logger.warning("psycopg_pool not found. Connection pooling will be disabled.")
-
-# -------------------------\
-# App config
-# -------------------------\
-app = Flask(__name__, static_folder="static", template_folder="templates")
-logging.basicConfig(level=logging.INFO)
-logger = app.logger
 
 # --- Environment / Secrets ---
 # Use real environment variables in production
